@@ -26,11 +26,16 @@ public class SearchController : ControllerBase
         var restQuery = _context.Restaurants
             .Where(r => !r.IsDeleted && r.IsApproved && r.IsOpen);
 
-        // Filter by Keyword
+        // Filter by Keyword using Full-Text Search (Vietnamese)
         if (!string.IsNullOrWhiteSpace(q))
         {
-            q = q.ToLower().Trim();
-            restQuery = restQuery.Where(r => r.Name.ToLower().Contains(q));
+            q = q.Trim();
+            // Using "simple" configuration for wide matching or "vietnamese" if installed. 
+            // "simple" is safe default. ToTsVector generates vector on the fly.
+            // WebSearchToTsQuery handles "foo bar" as "foo & bar".
+            restQuery = restQuery.Where(r => 
+                EF.Functions.ToTsVector("simple", r.Name + " " + (r.Address ?? "") + " " + string.Join(" ", r.Tags ?? Array.Empty<string>()))
+                .Matches(EF.Functions.WebSearchToTsQuery("simple", q)));
         }
 
         // Filter by Freeship
@@ -49,12 +54,20 @@ public class SearchController : ControllerBase
                 restQuery = restQuery.OrderBy(r => r.Distance);
                 break;
             case "price_low":
-                restQuery = restQuery.OrderBy(r => r.MinPrice); // Assuming MinPrice represents base price level
+                restQuery = restQuery.OrderBy(r => r.MinPrice);
                 break;
             default:
-                // Default sort, maybe by relevance or ID?
-                // If checking "Gần tôi" without keyword, effectively it is distance sort.
-                if (string.IsNullOrWhiteSpace(q)) restQuery = restQuery.OrderBy(r => r.Distance); 
+                // If searching by keyword, sort by Rank (Relevance)
+                if (!string.IsNullOrWhiteSpace(q))
+                {
+                    restQuery = restQuery.OrderByDescending(r => 
+                        EF.Functions.ToTsVector("simple", r.Name + " " + (r.Address ?? "") + " " + string.Join(" ", r.Tags ?? Array.Empty<string>()))
+                        .Rank(EF.Functions.WebSearchToTsQuery("simple", q)));
+                } 
+                else 
+                {
+                    restQuery = restQuery.OrderBy(r => r.Distance); 
+                }
                 break;
         }
 
@@ -73,17 +86,20 @@ public class SearchController : ControllerBase
             })
             .ToListAsync();
 
-        // 2. Search Menu Items (Foods) - Only if keyword provided
-        // Food filtering by 'isFreeship' generally means 'Restaurant has Freeship'
+        // 2. Search Menu Items (Foods)
         List<MenuItemDto> foods = new();
         if (!string.IsNullOrWhiteSpace(q))
         {
              var foodQuery = _context.MenuItems
                 .Include(m => m.MenuCategory)
                     .ThenInclude(mc => mc.Restaurant)
-                .Where(m => !m.IsDeleted && m.IsAvailable && 
-                           (m.Name.ToLower().Contains(q) || (m.Description != null && m.Description.ToLower().Contains(q))));
-             
+                .Where(m => !m.IsDeleted && m.IsAvailable);
+
+             // Full Text Search on Food Name and Description
+             foodQuery = foodQuery.Where(m => 
+                EF.Functions.ToTsVector("simple", m.Name + " " + (m.Description ?? ""))
+                .Matches(EF.Functions.WebSearchToTsQuery("simple", q)));
+
              if (isFreeship)
              {
                  foodQuery = foodQuery.Where(m => m.MenuCategory.Restaurant.DeliveryFee == 0);
@@ -95,7 +111,12 @@ public class SearchController : ControllerBase
                 case "price_low":
                     foodQuery = foodQuery.OrderBy(m => m.Price);
                     break;
-                 // Other sorts like 'rating' apply to Restaurant usually.
+                default:
+                    // Sort by Rank
+                    foodQuery = foodQuery.OrderByDescending(m => 
+                        EF.Functions.ToTsVector("simple", m.Name + " " + (m.Description ?? ""))
+                        .Rank(EF.Functions.WebSearchToTsQuery("simple", q)));
+                    break;
              }
 
              foods = await foodQuery
