@@ -178,22 +178,86 @@ public static class DbSeeder
             // ---------------------------------------------------------
             // 2. Categories
             // ---------------------------------------------------------
-            if (!await context.FoodCategories.AnyAsync())
+            // ---------------------------------------------------------
+            // 2. Categories (Upsert: Update existing or Create new)
+            // ---------------------------------------------------------
+            var categoryDefinitions = new List<FoodCategory>
             {
-                var categories = new List<FoodCategory>
+                new FoodCategory { 
+                    Id = Guid.NewGuid(), 
+                    Name = "Cơm", 
+                    IconUrl = "https://cdn-icons-png.flaticon.com/512/1531/1531338.png", 
+                    BackgroundColor = "#FFF5E6", // Light Orange
+                    ImageUrl = "https://images.unsplash.com/photo-1512058564366-18510be2db19" 
+                },
+                new FoodCategory { 
+                    Id = Guid.NewGuid(), 
+                    Name = "Bún/Phở", 
+                    IconUrl = "https://cdn-icons-png.flaticon.com/512/3421/3421683.png", 
+                    BackgroundColor = "#E6F7FF", // Light Blue
+                    ImageUrl = "https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43" 
+                },
+                new FoodCategory { 
+                    Id = Guid.NewGuid(), 
+                    Name = "Trà Sữa", 
+                    IconUrl = "https://cdn-icons-png.flaticon.com/512/3081/3081162.png", 
+                    BackgroundColor = "#FFF0F6", // Light Pink
+                    ImageUrl = "https://images.unsplash.com/photo-1556679343-c7306c1976bc" 
+                },
+                new FoodCategory { 
+                    Id = Guid.NewGuid(), 
+                    Name = "Ăn Vặt", 
+                    IconUrl = "https://cdn-icons-png.flaticon.com/512/737/737967.png", 
+                    BackgroundColor = "#FFFFE6", // Light Yellow
+                    ImageUrl = "https://images.unsplash.com/photo-1561758033-d89a9ad46330" 
+                },
+                new FoodCategory { 
+                    Id = Guid.NewGuid(), 
+                    Name = "Healthy", 
+                    IconUrl = "https://cdn-icons-png.flaticon.com/512/2913/2913456.png", 
+                    BackgroundColor = "#E6FFFA", // Light Green
+                    ImageUrl = "https://images.unsplash.com/photo-1512621776951-a57141f2eefd" 
+                },
+                new FoodCategory { 
+                    Id = Guid.NewGuid(), 
+                    Name = "Deal Hời", 
+                    IconUrl = "https://cdn-icons-png.flaticon.com/512/726/726496.png", 
+                    BackgroundColor = "#FFF1F0", // Light Red
+                    ImageUrl = "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da" 
+                },
+                new FoodCategory { 
+                    Id = Guid.NewGuid(), 
+                    Name = "Đi Chợ", 
+                    IconUrl = "https://cdn-icons-png.flaticon.com/512/1261/1261163.png", 
+                    BackgroundColor = "#F9F0FF", // Light Purple
+                    ImageUrl = "https://images.unsplash.com/photo-1542838132-92c53300491e" 
+                },
+                new FoodCategory { 
+                    Id = Guid.NewGuid(), 
+                    Name = "Thêm", 
+                    IconUrl = "https://cdn-icons-png.flaticon.com/512/2948/2948032.png", 
+                    BackgroundColor = "#F5F5F5", // Light Grey
+                    ImageUrl = "https://images.unsplash.com/photo-1516321318423-f06f85e504b3" 
+                }
+            };
+
+            foreach (var catDef in categoryDefinitions)
+            {
+                var existing = await context.FoodCategories.FirstOrDefaultAsync(c => c.Name == catDef.Name);
+                if (existing == null)
                 {
-                    new FoodCategory { Id = Guid.NewGuid(), Name = "Cơm", IconUrl = "https://cdn-icons-png.flaticon.com/512/1531/1531338.png", ImageUrl = "https://images.unsplash.com/photo-1512058564366-18510be2db19" },
-                    new FoodCategory { Id = Guid.NewGuid(), Name = "Bún/Phở", IconUrl = "https://cdn-icons-png.flaticon.com/512/3421/3421683.png", ImageUrl = "https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43" },
-                    new FoodCategory { Id = Guid.NewGuid(), Name = "Đồ Ăn Nhanh", IconUrl = "https://cdn-icons-png.flaticon.com/512/737/737967.png", ImageUrl = "https://images.unsplash.com/photo-1561758033-d89a9ad46330" },
-                    new FoodCategory { Id = Guid.NewGuid(), Name = "Trà Sữa", IconUrl = "https://cdn-icons-png.flaticon.com/512/3081/3081162.png", ImageUrl = "https://images.unsplash.com/photo-1556679343-c7306c1976bc" },
-                    new FoodCategory { Id = Guid.NewGuid(), Name = "Ăn Vặt", IconUrl = "https://cdn-icons-png.flaticon.com/512/2515/2515127.png", ImageUrl = "https://images.unsplash.com/photo-1565557623262-b51c2513a641" },
-                    new FoodCategory { Id = Guid.NewGuid(), Name = "Healthy", IconUrl = "https://cdn-icons-png.flaticon.com/512/2913/2913456.png", ImageUrl = "https://images.unsplash.com/photo-1512621776951-a57141f2eefd" }
-                };
-                await context.FoodCategories.AddRangeAsync(categories);
-                await context.SaveChangesAsync();
-                
-                Log($"Seeded {categories.Count} categories.");
+                    await context.FoodCategories.AddAsync(catDef);
+                }
+                else
+                {
+                    existing.IconUrl = catDef.IconUrl;
+                    existing.BackgroundColor = catDef.BackgroundColor;
+                    existing.ImageUrl = catDef.ImageUrl;
+                }
             }
+            await context.SaveChangesAsync();
+            Log($"Seeded/Updated {categoryDefinitions.Count} categories with Icons and Colors.");
+
 
             // ---------------------------------------------------------
             // 3. Restaurants & Menu Items
@@ -222,7 +286,7 @@ public static class DbSeeder
                         Id = Guid.NewGuid(), 
                         MerchantId = merchantProfile.Id,
                         Name = "KFC - Gà Rán", 
-                        CategoryId = cats.FirstOrDefault(c => c.Name == "Đồ Ăn Nhanh")?.Id,
+                        CategoryId = cats.FirstOrDefault(c => c.Name == "Ăn Vặt")?.Id, // Fast Food mapped to Ăn Vặt or we can add separate
                         ImageUrl = "https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec",
                         Address = "Lotte Mart, Q.7",
                         Rating = 4.6, RatingCount = 2000, DeliveryTime = 30, DeliveryFee = 20000, MinPrice = 40000, Distance = 5.0,
@@ -246,7 +310,7 @@ public static class DbSeeder
                         Id = Guid.NewGuid(), 
                         MerchantId = merchantProfile.Id,
                         Name = "Pizza Hut", 
-                        CategoryId = cats.FirstOrDefault(c => c.Name == "Đồ Ăn Nhanh")?.Id,
+                        CategoryId = cats.FirstOrDefault(c => c.Name == "Ăn Vặt")?.Id, // Pizza mapped to Ăn Vặt
                         ImageUrl = "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38",
                         Address = "345 Nguyễn Thị Thập, Q.7",
                         Rating = 4.5, RatingCount = 850, DeliveryTime = 40, DeliveryFee = 25000, MinPrice = 100000, Distance = 3.2,
