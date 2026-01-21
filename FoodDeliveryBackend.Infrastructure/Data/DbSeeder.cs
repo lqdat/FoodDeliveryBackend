@@ -336,6 +336,54 @@ public static class DbSeeder
                 }
             }
             
+            // ---------------------------------------------------------
+            // 7. Seed Vouchers
+            // ---------------------------------------------------------
+            if (!await context.Vouchers.AnyAsync())
+            {
+                var vouchers = new List<Voucher>
+                {
+                    new Voucher
+                    {
+                        Id = Guid.NewGuid(),
+                        Code = "WELCOME50",
+                        Name = "Giảm 50% Bạn Mới",
+                        Description = "Giảm tối đa 50k cho đơn đầu tiên",
+                        Type = 1, // Percentage
+                        DiscountValue = 50,
+                        MaxDiscountAmount = 50000,
+                        MinOrderAmount = 100000,
+                        StartDate = now.AddDays(-1),
+                        EndDate = now.AddDays(30),
+                        MaxUsage = 1000,
+                        UsedCount = 0,
+                        IsActive = true,
+                        IconUrl = "https://cdn-icons-png.flaticon.com/512/726/726496.png",
+                        CreatedAt = now
+                    },
+                    new Voucher
+                    {
+                         Id = Guid.NewGuid(),
+                        Code = "GIAM20K",
+                        Name = "Giảm 20k Đơn 100k",
+                        Description = "Ưu đãi cho mọi đơn hàng",
+                        Type = 0, // Fixed
+                        DiscountValue = 20000,
+                        MaxDiscountAmount = 20000,
+                        MinOrderAmount = 100000,
+                        StartDate = now.AddDays(-1),
+                        EndDate = now.AddDays(15),
+                        IsActive = true,
+                         IconUrl = "https://cdn-icons-png.flaticon.com/512/879/879757.png",
+                        CreatedAt = now
+                    }
+                };
+                
+                await context.Vouchers.AddRangeAsync(vouchers);
+                await context.SaveChangesAsync();
+                Log("Seeded sample Vouchers.");
+            }
+
             Log("Seed completed successfully!");
             Console.WriteLine("Seed completed successfully!");
         }

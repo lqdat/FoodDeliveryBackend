@@ -1,11 +1,13 @@
 using FoodDeliveryBackend.Core.Entities;
 using FoodDeliveryBackend.Infrastructure.Data;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Linq; // Added specifically for OrderBy
 
 namespace FoodDeliveryBackend.API.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class OrdersController : ControllerBase

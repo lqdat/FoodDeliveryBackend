@@ -34,8 +34,16 @@ public class FoodDeliveryDbContext : DbContext
     public virtual DbSet<User> Users { get; set; }
     public virtual DbSet<Voucher> Vouchers { get; set; }
 
+    public virtual DbSet<CustomerVoucher> CustomerVouchers { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<CustomerVoucher>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => new { e.CustomerId, e.VoucherId }).IsUnique();
+        });
+        
         modelBuilder.Entity<Address>(entity =>
         {
             entity.HasIndex(e => e.CustomerId, "IX_Addresses_CustomerId");

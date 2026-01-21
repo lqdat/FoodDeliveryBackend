@@ -3,6 +3,7 @@ using System;
 using FoodDeliveryBackend.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FoodDeliveryBackend.Infrastructure.Migrations
 {
     [DbContext(typeof(FoodDeliveryDbContext))]
-    partial class FoodDeliveryDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260121081212_AddCategoryImageUrl")]
+    partial class AddCategoryImageUrl
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -210,37 +213,6 @@ namespace FoodDeliveryBackend.Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("Customers");
-                });
-
-            modelBuilder.Entity("FoodDeliveryBackend.Core.Entities.CustomerVoucher", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("CustomerId")
-                        .HasColumnType("uuid");
-
-                    b.Property<bool>("IsUsed")
-                        .HasColumnType("boolean");
-
-                    b.Property<DateTime>("SavedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("UsedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("VoucherId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("VoucherId");
-
-                    b.HasIndex("CustomerId", "VoucherId")
-                        .IsUnique();
-
-                    b.ToTable("CustomerVouchers");
                 });
 
             modelBuilder.Entity("FoodDeliveryBackend.Core.Entities.Driver", b =>
@@ -1260,25 +1232,6 @@ namespace FoodDeliveryBackend.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("FoodDeliveryBackend.Core.Entities.CustomerVoucher", b =>
-                {
-                    b.HasOne("FoodDeliveryBackend.Core.Entities.Customer", "Customer")
-                        .WithMany()
-                        .HasForeignKey("CustomerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("FoodDeliveryBackend.Core.Entities.Voucher", "Voucher")
-                        .WithMany()
-                        .HasForeignKey("VoucherId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Customer");
-
-                    b.Navigation("Voucher");
                 });
 
             modelBuilder.Entity("FoodDeliveryBackend.Core.Entities.Driver", b =>

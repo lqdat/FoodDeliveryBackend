@@ -24,4 +24,17 @@ public class CategoriesController : ControllerBase
             .OrderBy(c => c.DisplayOrder)
             .ToListAsync();
     }
+
+    [HttpGet("{id}")]
+    public async Task<ActionResult<FoodCategory>> GetCategory(Guid id)
+    {
+        var category = await _context.FoodCategories.FirstOrDefaultAsync(c => c.Id == id && !c.IsDeleted && c.IsActive);
+        
+        if (category == null)
+        {
+            return NotFound();
+        }
+        
+        return category;
+    }
 }
