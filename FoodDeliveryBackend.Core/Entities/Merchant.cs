@@ -13,6 +13,10 @@ public partial class Merchant
 
     public string? BusinessLicense { get; set; }
 
+    public string ContactEmail { get; set; } = null!;
+
+    public string ContactPhone { get; set; } = null!;
+
     public DateTime CreatedAt { get; set; }
 
     public DateTime? UpdatedAt { get; set; }
@@ -28,6 +32,10 @@ public partial class Merchant
     public string? IdCardFrontUrl { get; set; }
 
     public bool IsApproved { get; set; }
+
+    public bool IsActive { get; set; }
+
+    public bool IsVerified { get; set; }
 
     public string? RejectionReason { get; set; }
 

@@ -13,6 +13,8 @@ public partial class FoodCategory
 
     public string? IconUrl { get; set; }
 
+    public string? ImageUrl { get; set; }
+
     public string? BackgroundColor { get; set; }
 
     public int DisplayOrder { get; set; }

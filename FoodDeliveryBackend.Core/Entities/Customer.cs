@@ -15,6 +15,10 @@ public partial class Customer
 
     public bool IsDeleted { get; set; }
 
+    public int LoyaltyPoints { get; set; }
+
+    public bool IsActive { get; set; }
+
     public virtual ICollection<Address> Addresses { get; set; } = new List<Address>();
 
     public virtual Cart? Cart { get; set; }

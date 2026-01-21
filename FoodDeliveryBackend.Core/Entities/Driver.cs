@@ -12,10 +12,16 @@ public partial class Driver
     public string VehicleType { get; set; } = null!;
 
     public string VehiclePlate { get; set; } = null!;
+    
+    public string? LicensePlate { get; set; }
 
     public string VehicleBrand { get; set; } = null!;
 
     public int Status { get; set; }
+
+    public bool IsOnline { get; set; }
+
+    public bool IsVerified { get; set; }
 
     public decimal WalletBalance { get; set; }
 
