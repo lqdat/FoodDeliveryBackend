@@ -57,14 +57,17 @@ public class OrdersController : ControllerBase
         var order = await _context.Orders
             .Include(o => o.OrderItems)
             .Include(o => o.Restaurant)
-            .Include(o => o.Driver) // Include Driver info
-            .Include(o => o.OrderTrackings.OrderBy(t => t.CreatedAt)) // Include detailed history
+            .Include(o => o.Driver)
+            .Include(o => o.OrderTrackings) // Load trackings
             .FirstOrDefaultAsync(o => o.Id == id);
 
         if (order == null)
         {
             return NotFound();
         }
+
+        // Sort in memory
+        order.OrderTrackings = order.OrderTrackings.OrderBy(t => t.CreatedAt).ToList();
 
         return order;
     }

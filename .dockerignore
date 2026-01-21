@@ -1,0 +1,12 @@
+**/.dockerignore
+**/.env
+**/.git
+**/.gitignore
+**/.vs
+**/.vscode
+**/bin
+**/obj
+**/out
+**/publish
+**/Results
+**/TestResults
