@@ -33,6 +33,13 @@ public class UpdateProfileRequest
     public string FullName { get; set; } = null!;
     public string? Email { get; set; }
     public string? AvatarUrl { get; set; }
+
+    // Driver Update
+    public string? VehicleType { get; set; }
+    public string? VehiclePlate { get; set; }
+
+    // Merchant Update
+    public string? BusinessName { get; set; }
 }
 
 public class ChangePasswordRequest

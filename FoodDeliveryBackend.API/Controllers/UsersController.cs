@@ -86,31 +86,44 @@ public class UsersController : ControllerBase
     }
 
     // PUT: api/users/profile
+    // PUT: api/users/profile
     [HttpPut("profile")]
     public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileRequest request)
     {
         var userId = GetUserId();
-        var user = await _context.Users.FindAsync(userId);
+        // Load User with relations to update them if needed
+        var user = await _context.Users
+            .Include(u => u.Driver)
+            .Include(u => u.Merchant)
+            .FirstOrDefaultAsync(u => u.Id == userId);
 
         if (user == null) return NotFound("User not found.");
 
+        // 1. Update Common User Info
         user.FullName = request.FullName;
         user.Email = request.Email;
-        user.AvatarUrl = request.AvatarUrl;
+        user.AvatarUrl = request.AvatarUrl; // Updates Avatar for everyone
         user.UpdatedAt = DateTime.UtcNow;
+
+        // 2. Update Driver Specifics
+        if (user.Role == 4 && user.Driver != null)
+        {
+            if (!string.IsNullOrEmpty(request.VehicleType)) user.Driver.VehicleType = request.VehicleType;
+            if (!string.IsNullOrEmpty(request.VehiclePlate)) user.Driver.VehiclePlate = request.VehiclePlate;
+        }
+
+        // 3. Update Merchant Specifics
+        if (user.Role == 3 && user.Merchant != null)
+        {
+             if (!string.IsNullOrEmpty(request.BusinessName)) user.Merchant.BusinessName = request.BusinessName;
+        }
 
         await _context.SaveChangesAsync();
 
-        return Ok(new { message = "Profile updated successfully", user = new UserProfileDto
-        {
-            Id = user.Id,
-            FullName = user.FullName,
-            Email = user.Email,
-            PhoneNumber = user.PhoneNumber,
-            AvatarUrl = user.AvatarUrl,
-            Role = user.Role,
-            CreatedAt = user.CreatedAt
-        }});
+        // Return updated profile (reuse GetProfile logic or simpler return)
+        // For simplicity/consistency, let's just return success message. 
+        // Frontend usually re-fetches profile or updates local state.
+        return Ok(new { message = "Profile updated successfully" });
     }
 
     // POST: api/users/change-password
