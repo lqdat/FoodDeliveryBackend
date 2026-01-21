@@ -9,6 +9,23 @@ public class UserProfileDto
     public string? AvatarUrl { get; set; }
     public int Role { get; set; }
     public DateTime CreatedAt { get; set; }
+    
+    // Customer specific
+    public int? LoyaltyPoints { get; set; }
+    public int? AddressCount { get; set; }
+    public int? OrderCount { get; set; }
+
+    // Driver Specific
+    public string? VehicleType { get; set; }
+    public string? VehiclePlate { get; set; }
+    public bool? IsOnline { get; set; }
+    public decimal? WalletBalance { get; set; }
+    public double? DriverRating { get; set; }
+
+    // Merchant Specific
+    public string? BusinessName { get; set; }
+    public int? RestaurantCount { get; set; }
+    public bool? IsMerchantActive { get; set; }
 }
 
 public class UpdateProfileRequest

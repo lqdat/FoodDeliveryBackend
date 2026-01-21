@@ -30,11 +30,19 @@ public class UsersController : ControllerBase
     public async Task<ActionResult<UserProfileDto>> GetProfile()
     {
         var userId = GetUserId();
-        var user = await _context.Users.FindAsync(userId);
+        var user = await _context.Users
+            .Include(u => u.Customer)
+                .ThenInclude(c => c.Addresses)
+            .Include(u => u.Customer)
+                .ThenInclude(c => c.Orders)
+            .Include(u => u.Driver)
+            .Include(u => u.Merchant)
+                .ThenInclude(m => m.Restaurants)
+            .FirstOrDefaultAsync(u => u.Id == userId);
 
         if (user == null) return NotFound("User not found.");
 
-        return new UserProfileDto
+        var dto = new UserProfileDto
         {
             Id = user.Id,
             FullName = user.FullName,
@@ -44,6 +52,37 @@ public class UsersController : ControllerBase
             Role = user.Role,
             CreatedAt = user.CreatedAt
         };
+
+        // 1=Admin, 2=Customer, 3=Merchant, 4=Driver
+        
+        // Customer
+        if (user.Role == 2 && user.Customer != null)
+        {
+            dto.LoyaltyPoints = user.Customer.LoyaltyPoints;
+            dto.AddressCount = user.Customer.Addresses.Count(a => !a.IsDeleted);
+            dto.OrderCount = user.Customer.Orders.Count;
+        }
+
+        // Merchant
+        if (user.Role == 3 && user.Merchant != null)
+        {
+            dto.BusinessName = user.Merchant.BusinessName;
+            dto.IsMerchantActive = user.Merchant.IsActive;
+            dto.RestaurantCount = user.Merchant.Restaurants.Count(r => !r.IsDeleted);
+        }
+
+        // Driver
+        if (user.Role == 4 && user.Driver != null)
+        {
+            dto.VehicleType = user.Driver.VehicleType;
+            dto.VehiclePlate = user.Driver.VehiclePlate;
+            dto.IsOnline = user.Driver.IsOnline;
+            dto.WalletBalance = user.Driver.WalletBalance;
+            dto.DriverRating = user.Driver.Rating;
+            dto.OrderCount = user.Driver.TotalDeliveries; // Use OrderCount field also for driver deliveries
+        }
+
+        return dto;
     }
 
     // PUT: api/users/profile
