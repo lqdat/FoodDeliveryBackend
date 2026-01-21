@@ -28,15 +28,39 @@ public class LocationsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<AddressDto>>> GetMyAddresses()
+    public async Task<ActionResult<IEnumerable<AddressDto>>> GetMyAddresses(
+        [FromQuery] string? label, // Filter by label (Home, Work, etc.)
+        [FromQuery] string? sortBy) // "recent" | "created"
     {
         var customer = await GetCurrentCustomerAsync();
         if (customer == null) return Unauthorized();
 
-        var addresses = await _context.Addresses
-            .Where(a => a.CustomerId == customer.Id && !a.IsDeleted)
-            .OrderByDescending(a => a.IsDefault)
-            .ThenByDescending(a => a.CreatedAt)
+        var query = _context.Addresses
+            .Where(a => a.CustomerId == customer.Id && !a.IsDeleted);
+
+        // Filter by Label
+        if (!string.IsNullOrWhiteSpace(label))
+        {
+            query = query.Where(a => a.Label.ToLower().Contains(label.ToLower()));
+        }
+
+        // Apply Sorting
+        switch (sortBy?.ToLower())
+        {
+            case "recent": // Sort by LastUsedAt (most recently used first)
+                query = query.OrderByDescending(a => a.LastUsedAt ?? DateTime.MinValue)
+                             .ThenByDescending(a => a.IsDefault);
+                break;
+            case "created": // Sort by CreatedAt
+                query = query.OrderByDescending(a => a.CreatedAt);
+                break;
+            default: // Default: IsDefault first, then by CreatedAt
+                query = query.OrderByDescending(a => a.IsDefault)
+                             .ThenByDescending(a => a.CreatedAt);
+                break;
+        }
+
+        var addresses = await query
             .Select(a => new AddressDto
             {
                 Id = a.Id,
@@ -45,11 +69,29 @@ public class LocationsController : ControllerBase
                 Note = a.Note,
                 Latitude = a.Latitude,
                 Longitude = a.Longitude,
-                IsDefault = a.IsDefault
+                IsDefault = a.IsDefault,
+                CreatedAt = a.CreatedAt,
+                LastUsedAt = a.LastUsedAt
             })
             .ToListAsync();
 
         return Ok(addresses);
+    }
+
+    // Mark an address as "used" (updates LastUsedAt)
+    [HttpPost("use/{id}")]
+    public async Task<IActionResult> UseAddress(Guid id)
+    {
+        var customer = await GetCurrentCustomerAsync();
+        if (customer == null) return Unauthorized();
+
+        var address = await _context.Addresses.FirstOrDefaultAsync(a => a.Id == id && a.CustomerId == customer.Id);
+        if (address == null) return NotFound();
+
+        address.LastUsedAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "Address usage updated" });
     }
 
     [HttpPost]

@@ -9,6 +9,8 @@ public class AddressDto
     public double Latitude { get; set; }
     public double Longitude { get; set; }
     public bool IsDefault { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime? LastUsedAt { get; set; }
 }
 
 public class CreateAddressRequest

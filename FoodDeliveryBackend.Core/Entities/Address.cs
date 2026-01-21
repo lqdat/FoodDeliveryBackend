@@ -25,6 +25,8 @@ public partial class Address
 
     public DateTime? UpdatedAt { get; set; }
 
+    public DateTime? LastUsedAt { get; set; } // Track when address was last used for an order
+
     public bool IsDeleted { get; set; }
 
     public virtual Customer Customer { get; set; } = null!;
