@@ -11,6 +11,12 @@ public class VerifyOtpRequest
     public string Otp { get; set; } = null!;
 }
 
+public class LoginPasswordRequest
+{
+    public string Email { get; set; } = null!;
+    public string Password { get; set; } = null!;
+}
+
 public class AuthResponse
 {
     public Guid UserId { get; set; }

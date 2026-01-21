@@ -52,6 +52,32 @@ public class AuthController : ControllerBase
         };
     }
 
+    [HttpPost("login-password")]
+    public async Task<ActionResult<AuthResponse>> LoginPassword([FromBody] LoginPasswordRequest request)
+    {
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
+        if (user == null) return NotFound(new { message = "User not found with this email." });
+
+        // Simple password check (In production, use BCrypt.Verify)
+        if (user.PasswordHash != request.Password && user.PasswordHash != "hashed_password_" + request.Password)
+        {
+            return Unauthorized(new { message = "Invalid password." });
+        }
+
+        var token = GenerateJwtToken(user);
+
+        return new AuthResponse
+        {
+            UserId = user.Id,
+            FullName = user.FullName,
+            Email = user.Email ?? "",
+            PhoneNumber = user.PhoneNumber,
+            AvatarUrl = user.AvatarUrl,
+            Role = user.Role,
+            Token = token
+        };
+    }
+
     private string GenerateJwtToken(FoodDeliveryBackend.Core.Entities.User user)
     {
         var jwtSecret = _configuration["JWT_SECRET"] ?? "super_secret_key_change_this_in_production_1234567890";
