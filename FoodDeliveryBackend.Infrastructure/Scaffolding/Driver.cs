@@ -1,0 +1,55 @@
+﻿using System;
+using System.Collections.Generic;
+
+namespace FoodDeliveryBackend.Infrastructure.Scaffolding;
+
+public partial class Driver
+{
+    public Guid Id { get; set; }
+
+    public Guid UserId { get; set; }
+
+    public string VehicleType { get; set; } = null!;
+
+    public string VehiclePlate { get; set; } = null!;
+
+    public string VehicleBrand { get; set; } = null!;
+
+    public int Status { get; set; }
+
+    public decimal WalletBalance { get; set; }
+
+    public double? CurrentLatitude { get; set; }
+
+    public double? CurrentLongitude { get; set; }
+
+    public double Rating { get; set; }
+
+    public int TotalDeliveries { get; set; }
+
+    public DateTime CreatedAt { get; set; }
+
+    public DateTime? UpdatedAt { get; set; }
+
+    public bool IsDeleted { get; set; }
+
+    public DateTime? ApprovedAt { get; set; }
+
+    public string? DriverLicenseUrl { get; set; }
+
+    public string? IdCardBackUrl { get; set; }
+
+    public string? IdCardFrontUrl { get; set; }
+
+    public bool IsApproved { get; set; }
+
+    public string? RejectionReason { get; set; }
+
+    public string? VehicleRegistrationUrl { get; set; }
+
+    public virtual ICollection<DriverEarning> DriverEarnings { get; set; } = new List<DriverEarning>();
+
+    public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
+
+    public virtual User User { get; set; } = null!;
+}
