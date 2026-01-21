@@ -31,20 +31,26 @@ public static class DbSeeder
             
             // --- Admin ---
             var adminEmail = "admin@example.com";
-            if (!await context.Users.AnyAsync(u => u.Email == adminEmail))
+            var adminUser = await context.Users.FirstOrDefaultAsync(u => u.Email == adminEmail);
+            if (adminUser == null)
             {
-                await context.Users.AddAsync(new User
+                adminUser = new User
                 {
                     Id = Guid.NewGuid(),
                     FullName = "System Admin",
                     Email = adminEmail,
                     PhoneNumber = "0900000001",
-                    PasswordHash = "hashed_password_admin", // In real app, use BCrypt
+                    PasswordHash = "admin", 
                     Role = 1,
                     IsActive = true,
                     CreatedAt = now,
                     UpdatedAt = now
-                });
+                };
+                await context.Users.AddAsync(adminUser);
+            }
+            else
+            {
+                adminUser.PasswordHash = "admin";
             }
 
             // --- Customer ---
@@ -58,13 +64,17 @@ public static class DbSeeder
                     FullName = "Nguyen Van Khach",
                     Email = customerEmail,
                     PhoneNumber = "0900000002",
-                    PasswordHash = "hashed_password_customer",
+                    PasswordHash = "customer",
                     Role = 2,
                     IsActive = true,
                     CreatedAt = now,
                     UpdatedAt = now
                 };
                 await context.Users.AddAsync(customerUser);
+            }
+            else
+            {
+                customerUser.PasswordHash = "customer";
             }
             
             // Ensure Customer Profile
@@ -91,13 +101,17 @@ public static class DbSeeder
                     FullName = "The Merchant Owner",
                     Email = merchantEmail,
                     PhoneNumber = "0900000003",
-                    PasswordHash = "hashed_password_merchant",
+                    PasswordHash = "merchant",
                     Role = 3,
                     IsActive = true,
                     CreatedAt = now,
                     UpdatedAt = now
                 };
                 await context.Users.AddAsync(merchantUser);
+            }
+            else
+            {
+                merchantUser.PasswordHash = "merchant";
             }
 
             // Ensure Merchant Profile
@@ -129,13 +143,17 @@ public static class DbSeeder
                     FullName = "Nguyen Van Tai Xe",
                     Email = driverEmail,
                     PhoneNumber = "0900000004",
-                    PasswordHash = "hashed_password_driver",
+                    PasswordHash = "driver",
                     Role = 4,
                     IsActive = true,
                     CreatedAt = now,
                     UpdatedAt = now
                 };
                 await context.Users.AddAsync(driverUser);
+            }
+            else
+            {
+                driverUser.PasswordHash = "driver";
             }
 
             // Ensure Driver Profile
@@ -164,12 +182,12 @@ public static class DbSeeder
             {
                 var categories = new List<FoodCategory>
                 {
-                    new FoodCategory { Id = Guid.NewGuid(), Name = "Cơm", ImageUrl = "https://images.unsplash.com/photo-1512058564366-18510be2db19" },
-                    new FoodCategory { Id = Guid.NewGuid(), Name = "Bún/Phở", ImageUrl = "https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43" },
-                    new FoodCategory { Id = Guid.NewGuid(), Name = "Đồ Ăn Nhanh", ImageUrl = "https://images.unsplash.com/photo-1561758033-d89a9ad46330" },
-                    new FoodCategory { Id = Guid.NewGuid(), Name = "Trà Sữa", ImageUrl = "https://images.unsplash.com/photo-1556679343-c7306c1976bc" },
-                    new FoodCategory { Id = Guid.NewGuid(), Name = "Ăn Vặt", ImageUrl = "https://images.unsplash.com/photo-1565557623262-b51c2513a641" },
-                    new FoodCategory { Id = Guid.NewGuid(), Name = "Healthy", ImageUrl = "https://images.unsplash.com/photo-1512621776951-a57141f2eefd" }
+                    new FoodCategory { Id = Guid.NewGuid(), Name = "Cơm", IconUrl = "https://cdn-icons-png.flaticon.com/512/1531/1531338.png", ImageUrl = "https://images.unsplash.com/photo-1512058564366-18510be2db19" },
+                    new FoodCategory { Id = Guid.NewGuid(), Name = "Bún/Phở", IconUrl = "https://cdn-icons-png.flaticon.com/512/3421/3421683.png", ImageUrl = "https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43" },
+                    new FoodCategory { Id = Guid.NewGuid(), Name = "Đồ Ăn Nhanh", IconUrl = "https://cdn-icons-png.flaticon.com/512/737/737967.png", ImageUrl = "https://images.unsplash.com/photo-1561758033-d89a9ad46330" },
+                    new FoodCategory { Id = Guid.NewGuid(), Name = "Trà Sữa", IconUrl = "https://cdn-icons-png.flaticon.com/512/3081/3081162.png", ImageUrl = "https://images.unsplash.com/photo-1556679343-c7306c1976bc" },
+                    new FoodCategory { Id = Guid.NewGuid(), Name = "Ăn Vặt", IconUrl = "https://cdn-icons-png.flaticon.com/512/2515/2515127.png", ImageUrl = "https://images.unsplash.com/photo-1565557623262-b51c2513a641" },
+                    new FoodCategory { Id = Guid.NewGuid(), Name = "Healthy", IconUrl = "https://cdn-icons-png.flaticon.com/512/2913/2913456.png", ImageUrl = "https://images.unsplash.com/photo-1512621776951-a57141f2eefd" }
                 };
                 await context.FoodCategories.AddRangeAsync(categories);
                 await context.SaveChangesAsync();
@@ -205,7 +223,7 @@ public static class DbSeeder
                         MerchantId = merchantProfile.Id,
                         Name = "KFC - Gà Rán", 
                         CategoryId = cats.FirstOrDefault(c => c.Name == "Đồ Ăn Nhanh")?.Id,
-                        ImageUrl = "https://images.unsplash.com/photo-1561758033-d89a9ad46330",
+                        ImageUrl = "https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec",
                         Address = "Lotte Mart, Q.7",
                         Rating = 4.6, RatingCount = 2000, DeliveryTime = 30, DeliveryFee = 20000, MinPrice = 40000, Distance = 5.0,
                          Tags = new[] { "Gà Rán", "KFC", "Fast Food" },
@@ -215,12 +233,36 @@ public static class DbSeeder
                     { 
                         Id = Guid.NewGuid(), 
                         MerchantId = merchantProfile.Id,
-                        Name = "Trà Sữa Koi Thé", 
+                        Name = "Koí Thé", 
                         CategoryId = cats.FirstOrDefault(c => c.Name == "Trà Sữa")?.Id,
-                        ImageUrl = "https://images.unsplash.com/photo-1556679343-c7306c1976bc",
+                        ImageUrl = "https://images.unsplash.com/photo-1558359250-9aa4e09f5fa4",
                         Address = "Vivo City, Q.7",
                         Rating = 4.9, RatingCount = 500, DeliveryTime = 15, DeliveryFee = 10000, MinPrice = 30000, Distance = 1.0,
                          Tags = new[] { "Trà Sữa", "Macchiato", "Trân Châu" },
+                        CreatedAt = now, IsApproved = true, IsOpen = true
+                    },
+                    new Restaurant 
+                    { 
+                        Id = Guid.NewGuid(), 
+                        MerchantId = merchantProfile.Id,
+                        Name = "Pizza Hut", 
+                        CategoryId = cats.FirstOrDefault(c => c.Name == "Đồ Ăn Nhanh")?.Id,
+                        ImageUrl = "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38",
+                        Address = "345 Nguyễn Thị Thập, Q.7",
+                        Rating = 4.5, RatingCount = 850, DeliveryTime = 40, DeliveryFee = 25000, MinPrice = 100000, Distance = 3.2,
+                         Tags = new[] { "Pizza", "Mỳ Ý", "Fast Food" },
+                        CreatedAt = now, IsApproved = true, IsOpen = true
+                    },
+                     new Restaurant 
+                    { 
+                        Id = Guid.NewGuid(), 
+                        MerchantId = merchantProfile.Id,
+                        Name = "Highlands Coffee", 
+                        CategoryId = cats.FirstOrDefault(c => c.Name == "Trà Sữa")?.Id, // Using Milk Tea/Drinks category
+                        ImageUrl = "https://images.unsplash.com/photo-1559496417-e7f25cb247f3",
+                        Address = "Crescent Mall, Q.7",
+                        Rating = 4.7, RatingCount = 1500, DeliveryTime = 25, DeliveryFee = 15000, MinPrice = 29000, Distance = 1.5,
+                         Tags = new[] { "Cà Phê", "Trà", "Bánh" },
                         CreatedAt = now, IsApproved = true, IsOpen = true
                     }
                 };
@@ -250,11 +292,24 @@ public static class DbSeeder
                     }
                     else if (rest.Name.Contains("KFC"))
                     {
-                         items.Add(new MenuItem { Id = Guid.NewGuid(), MenuCategoryId = menuCat.Id, Name = "Combo Gà Rán", Price = 89000, ImageUrl = "https://images.unsplash.com/photo-1561758033-d89a9ad46330", Description = "2 miếng gà + khoai + nước" });
+                         items.Add(new MenuItem { Id = Guid.NewGuid(), MenuCategoryId = menuCat.Id, Name = "Combo Gà Rán", Price = 89000, ImageUrl = "https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec", Description = "2 miếng gà + khoai + nước" });
+                         items.Add(new MenuItem { Id = Guid.NewGuid(), MenuCategoryId = menuCat.Id, Name = "Burger Tôm", Price = 45000, ImageUrl = "https://images.unsplash.com/photo-1568901346375-23c9450c58cd", Description = "Burger tôm giòn tan" });
                     }
-                     else if (rest.Name.Contains("Trà Sữa"))
+                     else if (rest.Name.Contains("Koí"))
                     {
-                         items.Add(new MenuItem { Id = Guid.NewGuid(), MenuCategoryId = menuCat.Id, Name = "Hồng Trà Macchiato", Price = 35000, ImageUrl = "https://images.unsplash.com/photo-1556679343-c7306c1976bc", Description = "Size M" });
+                         items.Add(new MenuItem { Id = Guid.NewGuid(), MenuCategoryId = menuCat.Id, Name = "Hồng Trà Macchiato", Price = 35000, ImageUrl = "https://images.unsplash.com/photo-1558359250-9aa4e09f5fa4", Description = "Size M" });
+                         items.Add(new MenuItem { Id = Guid.NewGuid(), MenuCategoryId = menuCat.Id, Name = "Lục Trà Trân Châu", Price = 40000, ImageUrl = "https://images.unsplash.com/photo-1556679343-c7306c1976bc", Description = "Thơm ngon đậm vị" });
+                    }
+                    else if (rest.Name.Contains("Pizza"))
+                    {
+                         items.Add(new MenuItem { Id = Guid.NewGuid(), MenuCategoryId = menuCat.Id, Name = "Pizza Hải Sản", Price = 159000, ImageUrl = "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38", Description = "Tôm, mực, thanh cua (Cỡ vừa)" });
+                         items.Add(new MenuItem { Id = Guid.NewGuid(), MenuCategoryId = menuCat.Id, Name = "Mỳ Ý Bò Bằm", Price = 89000, ImageUrl = "https://images.unsplash.com/photo-1551183053-bf91a1d81141", Description = "Sốt bò bằm cà chua" });
+                    }
+                    else if (rest.Name.Contains("Highlands"))
+                    {
+                         items.Add(new MenuItem { Id = Guid.NewGuid(), MenuCategoryId = menuCat.Id, Name = "Phin Sữa Đá", Price = 29000, ImageUrl = "https://images.unsplash.com/photo-1559496417-e7f25cb247f3", Description = "Cà phê phin truyền thống" });
+                         items.Add(new MenuItem { Id = Guid.NewGuid(), MenuCategoryId = menuCat.Id, Name = "Trà Sen Vàng", Price = 45000, ImageUrl = "https://images.unsplash.com/photo-1595981267035-7b04ca84a82d", Description = "Trà sen kem sữa" });
+                         items.Add(new MenuItem { Id = Guid.NewGuid(), MenuCategoryId = menuCat.Id, Name = "Bánh Mì Thịt Nướng", Price = 19000, ImageUrl = "https://images.unsplash.com/photo-1549449234-58d0092c6cc1", Description = "Bánh mì Việt Nam" });
                     }
                     
                     await context.MenuItems.AddRangeAsync(items);
