@@ -53,6 +53,8 @@ public partial class Order
 
     public int EstimatedDeliveryMinutes { get; set; }
 
+    public double Distance { get; set; } // Distance in kilometers from Restaurant to Delivery
+
     public DateTime CreatedAt { get; set; }
 
     public DateTime? UpdatedAt { get; set; }

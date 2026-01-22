@@ -23,7 +23,6 @@ public class OrdersController : ControllerBase
     public async Task<ActionResult<Order>> CreateOrder(Order order)
     {
         // Generate OrderNumber (Unique Index required)
-        // OrderNumber is string per schema. Simple unique generation:
         order.OrderNumber = "ORD-" + DateTime.UtcNow.Ticks;
         
         // Ensure ID
@@ -33,12 +32,25 @@ public class OrdersController : ControllerBase
         if (order.CreatedAt == default) order.CreatedAt = DateTime.UtcNow;
 
         // Map UserId to CustomerId if provided
-        // Assuming Order comes with UserId (from Frontend User ID) but Schema needs CustomerId
         if (order.CustomerId == Guid.Empty)
         {
-             // Strategy: Select the first available customer for this mock backend
              var firstCustomer = await _context.Customers.FirstOrDefaultAsync();
              if (firstCustomer != null) order.CustomerId = firstCustomer.Id;
+        }
+
+        // Calculate Distance from Restaurant to Delivery Address
+        var restaurant = await _context.Restaurants.FindAsync(order.RestaurantId);
+        if (restaurant != null)
+        {
+            order.Distance = CalculateHaversineDistance(
+                restaurant.Latitude, restaurant.Longitude,
+                order.DeliveryLatitude, order.DeliveryLongitude);
+            
+            // Estimate delivery time: ~3 minutes per km + 10 min prep
+            if (order.EstimatedDeliveryMinutes == 0)
+            {
+                order.EstimatedDeliveryMinutes = (int)(order.Distance * 3) + 10;
+            }
         }
 
         _context.Orders.Add(order);
@@ -52,6 +64,21 @@ public class OrdersController : ControllerBase
         await _context.SaveChangesAsync();
         return CreatedAtAction(nameof(GetOrder), new { id = order.Id }, order);
     }
+
+    // Haversine formula to calculate distance between two coordinates in km
+    private static double CalculateHaversineDistance(double lat1, double lon1, double lat2, double lon2)
+    {
+        const double R = 6371; // Earth's radius in km
+        var dLat = ToRad(lat2 - lat1);
+        var dLon = ToRad(lon2 - lon1);
+        var a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2) +
+                Math.Cos(ToRad(lat1)) * Math.Cos(ToRad(lat2)) *
+                Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
+        var c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
+        return Math.Round(R * c, 2); // Distance in km, rounded to 2 decimals
+    }
+
+    private static double ToRad(double deg) => deg * (Math.PI / 180);
 
     [HttpGet("{id}")]
     public async Task<ActionResult<Order>> GetOrder(Guid id)
