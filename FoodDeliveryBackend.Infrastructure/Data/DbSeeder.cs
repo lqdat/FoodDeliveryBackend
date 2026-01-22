@@ -452,6 +452,51 @@ public static class DbSeeder
                         
                         await context.SaveChangesAsync();
                     }
+
+                    // Order 2: Active (Delivering)
+                    var order2 = new Order
+                    {
+                        Id = Guid.NewGuid(),
+                        OrderNumber = "ORD-" + DateTime.UtcNow.Ticks + "-2",
+                        CustomerId = (await context.Customers.FirstAsync(c => c.UserId == customerUser.Id)).Id,
+                        RestaurantId = comTamRest.Id,
+                        DeliveryAddress = "456 Nguyen Trai, Q5",
+                        DeliveryLatitude = 10.755, 
+                        DeliveryLongitude = 106.67,
+                        Subtotal = menuItem.Price * 2,
+                        DeliveryFee = 15000,
+                        TotalAmount = (menuItem.Price * 2) + 15000,
+                        Status = 4, // Delivering
+                        PaymentMethod = 1, // Cash
+                        EstimatedDeliveryMinutes = 15,
+                        Distance = 3.5,
+                        CreatedAt = now.AddMinutes(-20),
+                        ConfirmedAt = now.AddMinutes(-15),
+                        PreparedAt = now.AddMinutes(-10),
+                        PickedUpAt = now.AddMinutes(-5)
+                    };
+                    
+                    await context.Orders.AddAsync(order2);
+                    
+                    await context.OrderItems.AddAsync(new OrderItem
+                    {
+                        Id = Guid.NewGuid(),
+                        OrderId = order2.Id,
+                        MenuItemId = menuItem.Id,
+                        Quantity = 2,
+                        UnitPrice = menuItem.Price,
+                        ItemName = menuItem.Name,
+                        TotalPrice = menuItem.Price * 2,
+                        CreatedAt = now.AddMinutes(-20)
+                    });
+
+                    await context.OrderTrackings.AddRangeAsync(new List<OrderTracking>
+                    {
+                        new OrderTracking { Id = Guid.NewGuid(), OrderId = order2.Id, Status = 0, Description = "Order Placed", CreatedAt = now.AddMinutes(-20) },
+                        new OrderTracking { Id = Guid.NewGuid(), OrderId = order2.Id, Status = 4, Description = "Driver is on the way", CreatedAt = now.AddMinutes(-5) }
+                    });
+
+                    await context.SaveChangesAsync();
                 }
             }
             

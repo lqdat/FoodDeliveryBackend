@@ -111,7 +111,24 @@ public class OrdersController : ControllerBase
 
          // Find Customer profile from UserId
          var customer = await _context.Customers.FirstOrDefaultAsync(c => c.UserId == userId);
-         if (customer == null) return NotFound("Customer profile not found for this user.");
+         if (customer == null)
+         {
+             // Check if User exists
+             var user = await _context.Users.FindAsync(userId);
+             if (user == null) return NotFound("User not found.");
+
+             // Auto-create Customer profile
+             customer = new Customer
+             {
+                 Id = Guid.NewGuid(),
+                 UserId = userId,
+                 LoyaltyPoints = 0,
+                 IsActive = true,
+                 CreatedAt = DateTime.UtcNow
+             };
+             _context.Customers.Add(customer);
+             await _context.SaveChangesAsync();
+         }
 
          var query = _context.Orders
              .Include(o => o.Restaurant)

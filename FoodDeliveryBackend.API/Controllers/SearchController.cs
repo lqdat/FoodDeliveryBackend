@@ -3,8 +3,11 @@ using FoodDeliveryBackend.Infrastructure.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
+using Microsoft.AspNetCore.Authorization;
+
 namespace FoodDeliveryBackend.API.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class SearchController : ControllerBase

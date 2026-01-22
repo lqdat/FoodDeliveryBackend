@@ -38,7 +38,7 @@ public class AuthController : ControllerBase
         // if (request.Otp != "123456") ...
 
         // Generate Real JWT Token
-        var token = GenerateJwtToken(user);
+        var (token, expiresAt) = GenerateJwtToken(user);
 
         return new AuthResponse
         {
@@ -48,7 +48,8 @@ public class AuthController : ControllerBase
             PhoneNumber = user.PhoneNumber,
             AvatarUrl = user.AvatarUrl,
             Role = user.Role,
-            Token = token
+            Token = token,
+            ExpiresAt = expiresAt
         };
     }
 
@@ -64,7 +65,7 @@ public class AuthController : ControllerBase
             return Unauthorized(new { message = "Invalid password." });
         }
 
-        var token = GenerateJwtToken(user);
+        var (token, expiresAt) = GenerateJwtToken(user);
 
         return new AuthResponse
         {
@@ -74,11 +75,12 @@ public class AuthController : ControllerBase
             PhoneNumber = user.PhoneNumber,
             AvatarUrl = user.AvatarUrl,
             Role = user.Role,
-            Token = token
+            Token = token,
+            ExpiresAt = expiresAt
         };
     }
 
-    private string GenerateJwtToken(FoodDeliveryBackend.Core.Entities.User user)
+    private (string Token, DateTime ExpiresAt) GenerateJwtToken(FoodDeliveryBackend.Core.Entities.User user)
     {
         var jwtSecret = _configuration["JWT_SECRET"] ?? "super_secret_key_change_this_in_production_1234567890";
         var securityKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(jwtSecret));
@@ -92,11 +94,12 @@ public class AuthController : ControllerBase
             new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Role, user.Role.ToString())
         };
 
+        var expiresAt = DateTime.UtcNow.AddDays(30);
         var token = new System.IdentityModel.Tokens.Jwt.JwtSecurityToken(
             claims: claims,
-            expires: DateTime.Now.AddDays(30),
+            expires: expiresAt,
             signingCredentials: credentials);
 
-        return new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler().WriteToken(token);
+        return (new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler().WriteToken(token), expiresAt);
     }
 }

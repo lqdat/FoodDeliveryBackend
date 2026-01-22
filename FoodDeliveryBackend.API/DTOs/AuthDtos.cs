@@ -26,4 +26,5 @@ public class AuthResponse
     public string? AvatarUrl { get; set; }
     public int Role { get; set; }
     public string Token { get; set; } = null!;
+    public DateTime ExpiresAt { get; set; } // Token expiration time
 }
