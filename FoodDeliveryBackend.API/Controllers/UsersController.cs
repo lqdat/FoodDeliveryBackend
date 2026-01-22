@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using FoodDeliveryBackend.API.DTOs;
+using FoodDeliveryBackend.Core.Entities;
 using FoodDeliveryBackend.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -42,6 +43,52 @@ public class UsersController : ControllerBase
 
         if (user == null) return NotFound("User not found.");
 
+        // Auto-create Profile if missing based on Role
+        // 2 = Customer
+        if (user.Role == 2 && user.Customer == null)
+        {
+            user.Customer = new Customer
+            {
+                Id = Guid.NewGuid(),
+                UserId = user.Id,
+                LoyaltyPoints = 0,
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow
+            };
+            _context.Customers.Add(user.Customer);
+            await _context.SaveChangesAsync();
+        }
+        // 3 = Merchant
+        else if (user.Role == 3 && user.Merchant == null)
+        {
+            user.Merchant = new Merchant
+            {
+                Id = Guid.NewGuid(),
+                UserId = user.Id,
+                BusinessName = "New Store",
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow
+            };
+            _context.Merchants.Add(user.Merchant);
+            await _context.SaveChangesAsync();
+        }
+        // 4 = Driver
+        else if (user.Role == 4 && user.Driver == null)
+        {
+            user.Driver = new Driver
+            {
+                Id = Guid.NewGuid(),
+                UserId = user.Id,
+                IsOnline = false,
+                IsVerified = false,
+                VehicleType = "Bike",
+                VehiclePlate = "",
+                CreatedAt = DateTime.UtcNow
+            };
+            _context.Drivers.Add(user.Driver);
+            await _context.SaveChangesAsync();
+        }
+
         var dto = new UserProfileDto
         {
             Id = user.Id,
@@ -52,8 +99,6 @@ public class UsersController : ControllerBase
             Role = user.Role,
             CreatedAt = user.CreatedAt
         };
-
-        // 1=Admin, 2=Customer, 3=Merchant, 4=Driver
         
         // Customer
         if (user.Role == 2 && user.Customer != null)
@@ -79,7 +124,7 @@ public class UsersController : ControllerBase
             dto.IsOnline = user.Driver.IsOnline;
             dto.WalletBalance = user.Driver.WalletBalance;
             dto.DriverRating = user.Driver.Rating;
-            dto.OrderCount = user.Driver.TotalDeliveries; // Use OrderCount field also for driver deliveries
+            dto.OrderCount = user.Driver.TotalDeliveries; 
         }
 
         return dto;
