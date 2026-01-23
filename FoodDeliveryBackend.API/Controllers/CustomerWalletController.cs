@@ -36,28 +36,20 @@ namespace FoodDeliveryBackend.API.Controllers
             if (customer == null) return NotFound("Customer profile not found.");
 
             // 1. Mock Linked Wallets (In a real app, this would be stored in DB)
-            // Simulating MoMo is linked, others are not
             var linkedWallets = new List<LinkedWalletDto>
             {
                 new LinkedWalletDto
                 {
                     Id = "momo",
                     Name = "MoMo",
-                    LogoUrl = "https://cdn-icons-png.flaticon.com/512/888/888870.png", // Placeholder
+                    LogoUrl = "https://upload.wikimedia.org/wikipedia/vi/f/fe/MoMo_Logo.png",
                     IsLinked = true 
                 },
                 new LinkedWalletDto
                 {
                     Id = "zalopay",
                     Name = "ZaloPay",
-                    LogoUrl = "https://cdn-icons-png.flaticon.com/512/888/888871.png", // Placeholder
-                    IsLinked = false
-                },
-                new LinkedWalletDto
-                {
-                    Id = "shopeepay",
-                    Name = "ShopeePay",
-                    LogoUrl = "https://cdn-icons-png.flaticon.com/512/888/888872.png", // Placeholder
+                    LogoUrl = "https://shopeeplus.com//upload/images/zalopay.png",
                     IsLinked = false
                 }
             };
@@ -74,30 +66,66 @@ namespace FoodDeliveryBackend.API.Controllers
                 }
             };
 
-            // 3. Transactions (From Orders)
-            // Filter orders that are Completed (Status 5) or Cancelled (Status 6) which involve payment
-            // For MVP, just showing recent orders as transactions
-            var transactions = customer.Orders
-                .Where(o => o.Status == 5 || o.Status == 6) // Delivered or Cancelled
+            // 3. Transactions (Mixed Real Orders + Mock Topups)
+            var transactions = new List<WalletTransactionDto>();
+
+            // Mock Data to match UI image
+            transactions.Add(new WalletTransactionDto
+            {
+                Id = Guid.NewGuid(),
+                Description = "Hoàn tiền đơn hàng #1102",
+                Amount = 82000,
+                Date = DateTime.UtcNow.AddDays(-2),
+                Status = "Thành công",
+                IsPositive = true,
+                Type = "refund"
+            });
+             transactions.Add(new WalletTransactionDto
+            {
+                Id = Guid.NewGuid(),
+                Description = "Nạp tiền vào ví",
+                Amount = 500000,
+                Date = DateTime.UtcNow.AddDays(-1),
+                Status = "Thành công",
+                IsPositive = true,
+                Type = "topup"
+            });
+
+            // Add recent orders as payments
+            var orderTransactions = customer.Orders
+                .Where(o => o.Status == 5 || o.Status == 6)
                 .OrderByDescending(o => o.CreatedAt)
-                .Take(10)
+                .Take(5)
                 .Select(o => new WalletTransactionDto
                 {
                     Id = o.Id,
-                    Description = $"Đơn hàng {o.OrderNumber} ({GetPaymentMethodName(o.PaymentMethod)})",
-                    Amount = -o.TotalAmount, // Expense
+                    Description = $"Thanh toán đơn hàng #{o.OrderNumber.Substring(o.OrderNumber.Length - 4)}",
+                    Amount = o.TotalAmount,
                     Date = o.CreatedAt,
                     Status = o.Status == 5 ? "Thành công" : "Đã hoàn tiền",
-                    IsPositive = false
-                })
-                .ToList();
+                    IsPositive = false,
+                    Type = "payment"
+                });
+            
+            transactions.AddRange(orderTransactions);
+            transactions = transactions.OrderByDescending(t => t.Date).ToList();
 
             return Ok(new CustomerWalletDto
             {
+                Balance = 1250000, // Mock Balance matching UI
+                IsVerified = true,
                 LinkedWallets = linkedWallets,
                 BankCards = bankCards,
                 Transactions = transactions
             });
+        }
+
+        [HttpPost("topup")]
+        public async Task<IActionResult> TopUp([FromBody] TopUpRequest request)
+        {
+            // Simulate processing
+            await Task.Delay(500); 
+            return Ok(new { message = "Nạp tiền thành công", newBalance = 1250000 + request.Amount });
         }
 
         [HttpGet("transactions")]

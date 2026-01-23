@@ -98,11 +98,11 @@ public class RestaurantsController : ControllerBase
             Id = restaurant.Id,
             Name = restaurant.Name,
             ImageUrl = restaurant.ImageUrl,
-            CoverUrl = restaurant.CoverUrl ?? restaurant.ImageUrl, // Fallback
+            CoverUrl = restaurant.CoverImageUrl ?? restaurant.ImageUrl, // Fallback
             Address = restaurant.Address,
             Rating = restaurant.Rating,
             Distance = restaurant.Distance,
-            DeliveryTime = restaurant.DeliveryTime, // "15-20 min"
+            DeliveryTime = $"{restaurant.DeliveryTime} min", 
             Tags = restaurant.Tags ?? new[] { "Món ngon", "Gần bạn" },
             IsFavorite = false, // TODO: Check with user favorites
             MenuSections = sections

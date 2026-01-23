@@ -5,7 +5,8 @@ namespace FoodDeliveryBackend.API.DTOs
 {
     public class CustomerWalletDto
     {
-        // Message: "Số dư được quản lý trực tiếp tại ứng dụng của đối tác"
+        public decimal Balance { get; set; }
+        public bool IsVerified { get; set; }
         public List<LinkedWalletDto> LinkedWallets { get; set; } = new();
         public List<BankCardDto> BankCards { get; set; } = new();
         public List<WalletTransactionDto> Transactions { get; set; } = new();
@@ -35,6 +36,13 @@ namespace FoodDeliveryBackend.API.DTOs
         public DateTime Date { get; set; }
         public string Status { get; set; } = null!; // "Thành công"
         public bool IsPositive { get; set; } // true if + (add funds), false if - (payment)
+        public string Type { get; set; } = "payment"; // payment, topup, refund
+    }
+
+    public class TopUpRequest
+    {
+        public decimal Amount { get; set; }
+        public string Source { get; set; } = "momo"; // bank_card, momo, zalopay
     }
 
     public class LinkWalletRequest
