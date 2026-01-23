@@ -35,13 +35,28 @@ builder.Services.AddAuthentication(Microsoft.AspNetCore.Authentication.JwtBearer
             ValidateAudience = false,
             ClockSkew = TimeSpan.Zero
         };
+        options.Events = new Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Query["access_token"];
+                var path = context.HttpContext.Request.Path;
+                if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs"))
+                {
+                    context.Token = accessToken;
+                }
+                return Task.CompletedTask;
+            }
+        };
     });
 
+builder.Services.AddSignalR();
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
     });
+
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -97,11 +112,14 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseCors("AllowAll");
+app.UseStaticFiles(); // Enable serving files from wwwroot
 
 app.UseAuthentication(); // Enable Auth
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<FoodDeliveryBackend.API.Hubs.NotificationHub>("/hubs/notifications");
+app.MapHub<FoodDeliveryBackend.API.Hubs.ChatHub>("/hubs/chat");
 
 // Redirect root to Swagger UI
 app.MapGet("/", () => Results.Redirect("/swagger/index.html"));

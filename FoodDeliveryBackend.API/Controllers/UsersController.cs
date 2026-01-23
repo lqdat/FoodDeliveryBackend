@@ -193,4 +193,40 @@ public class UsersController : ControllerBase
 
         return Ok(new { message = "Password changed successfully" });
     }
+    // POST: api/users/avatar
+    [HttpPost("avatar")]
+    public async Task<IActionResult> UploadAvatar(IFormFile file)
+    {
+        if (file == null || file.Length == 0)
+            return BadRequest("No file uploaded.");
+
+        var userId = GetUserId();
+        var user = await _context.Users.FindAsync(userId);
+        if (user == null) return NotFound("User not found.");
+
+        // Define path
+        var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
+        if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
+
+        // Unique filename
+        var fileName = $"{userId}_{DateTime.UtcNow.Ticks}{Path.GetExtension(file.FileName)}";
+        var filePath = Path.Combine(uploadsFolder, fileName);
+
+        // Save file
+        using (var stream = new FileStream(filePath, FileMode.Create))
+        {
+            await file.CopyToAsync(stream);
+        }
+
+        // Construct URL (assuming default local dev, in Prod use CDN or proper Host handling)
+        var baseUrl = $"{Request.Scheme}://{Request.Host}{Request.PathBase}";
+        var avatarUrl = $"{baseUrl}/uploads/{fileName}";
+
+        // Update DB
+        user.AvatarUrl = avatarUrl;
+        user.UpdatedAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+
+        return Ok(new { avatarUrl });
+    }
 }
