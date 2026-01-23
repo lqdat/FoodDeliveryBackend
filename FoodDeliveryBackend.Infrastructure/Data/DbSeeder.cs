@@ -681,7 +681,9 @@ public static class DbSeeder
             // 9. Seed Chat Messages (New)
             // ---------------------------------------------------------
             // Find the active order (Order 2 from step 6)
-            var activeOrder = await context.Orders.OrderByDescending(o => o.CreatedAt).FirstOrDefaultAsync(o => o.Status == 4 && o.CustomerId == (await context.Customers.FirstAsync(c => c.UserId == customerUser.Id)).Id);
+            // Find the active order (Order 2 from step 6)
+            var customerId = (await context.Customers.FirstAsync(c => c.UserId == customerUser.Id)).Id;
+            var activeOrder = await context.Orders.OrderByDescending(o => o.CreatedAt).FirstOrDefaultAsync(o => o.Status == 4 && o.CustomerId == customerId);
             
             if (activeOrder != null && !await context.ChatMessages.AnyAsync(m => m.OrderId == activeOrder.Id))
             {
