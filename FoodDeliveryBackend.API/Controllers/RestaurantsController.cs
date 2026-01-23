@@ -1,3 +1,4 @@
+using FoodDeliveryBackend.API.DTOs;
 using FoodDeliveryBackend.Core.Entities;
 using FoodDeliveryBackend.Infrastructure.Data;
 using Microsoft.AspNetCore.Mvc;
@@ -39,11 +40,11 @@ public class RestaurantsController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<Restaurant>> GetRestaurant(Guid id)
+    public async Task<ActionResult<RestaurantDetailDto>> GetRestaurant(Guid id)
     {
         var restaurant = await _context.Restaurants
             .Include(r => r.MenuCategories)
-            .ThenInclude(mc => mc.MenuItems)
+                .ThenInclude(mc => mc.MenuItems)
             .FirstOrDefaultAsync(r => r.Id == id);
 
         if (restaurant == null)
@@ -51,6 +52,82 @@ public class RestaurantsController : ControllerBase
             return NotFound();
         }
 
-        return restaurant;
+        // Map to DTO
+        var sections = new List<MenuSectionDto>();
+
+        // 1. "Dành cho bạn" / "Món Nổi Bật" Section (Popular items)
+        var popularItems = restaurant.MenuCategories
+            .SelectMany(mc => mc.MenuItems)
+            .Where(m => m.IsPopular && !m.IsDeleted && m.IsAvailable)
+            .Take(5)
+            .Select(MapToMenuItemDto)
+            .ToList();
+
+        if (popularItems.Any())
+        {
+            sections.Add(new MenuSectionDto
+            {
+                Id = Guid.NewGuid(),
+                Name = "Món Nổi Bật", // Matches "Dành cho bạn" implicitly or explicit section
+                Items = popularItems
+            });
+        }
+
+        // 2. Regular Categories
+        foreach (var category in restaurant.MenuCategories.OrderBy(c => c.DisplayOrder))
+        {
+            var items = category.MenuItems
+                .Where(m => !m.IsDeleted && m.IsAvailable)
+                .OrderBy(m => m.DisplayOrder)
+                .Select(MapToMenuItemDto)
+                .ToList();
+
+            if (items.Any())
+            {
+                sections.Add(new MenuSectionDto
+                {
+                    Id = category.Id,
+                    Name = category.Name,
+                    Items = items
+                });
+            }
+        }
+
+        return new RestaurantDetailDto
+        {
+            Id = restaurant.Id,
+            Name = restaurant.Name,
+            ImageUrl = restaurant.ImageUrl,
+            CoverUrl = restaurant.CoverUrl ?? restaurant.ImageUrl, // Fallback
+            Address = restaurant.Address,
+            Rating = restaurant.Rating,
+            Distance = restaurant.Distance,
+            DeliveryTime = restaurant.DeliveryTime, // "15-20 min"
+            Tags = restaurant.Tags ?? new[] { "Món ngon", "Gần bạn" },
+            IsFavorite = false, // TODO: Check with user favorites
+            MenuSections = sections
+        };
+    }
+
+    private MenuItemDetailDto MapToMenuItemDto(MenuItem m)
+    {
+        string? badge = null;
+        if (m.OriginalPrice > m.Price)
+        {
+            int percent = (int)((1 - m.Price / m.OriginalPrice) * 100);
+            badge = $"-{percent}%";
+        }
+
+        return new MenuItemDetailDto
+        {
+            Id = m.Id,
+            Name = m.Name,
+            Description = m.Description ?? "",
+            Price = m.Price,
+            OriginalPrice = m.OriginalPrice,
+            ImageUrl = m.ImageUrl ?? "https://placeholder.com/food", // Placeholder if null
+            IsPopular = m.IsPopular,
+            DiscountBadge = badge
+        };
     }
 }
