@@ -96,8 +96,14 @@ public class UsersController : ControllerBase
             Email = user.Email,
             PhoneNumber = user.PhoneNumber,
             AvatarUrl = user.AvatarUrl,
+            DateOfBirth = user.DateOfBirth,
             Role = user.Role,
-            CreatedAt = user.CreatedAt
+            CreatedAt = user.CreatedAt,
+            LinkedAccounts = new List<LinkedAccountDto>
+            {
+                new LinkedAccountDto { Provider = "Google", IsLinked = !string.IsNullOrEmpty(user.GoogleId) },
+                new LinkedAccountDto { Provider = "Facebook", IsLinked = !string.IsNullOrEmpty(user.FacebookId) }
+            }
         };
         
         // Customer
@@ -147,7 +153,9 @@ public class UsersController : ControllerBase
         // 1. Update Common User Info
         user.FullName = request.FullName;
         user.Email = request.Email;
+        user.Email = request.Email;
         user.AvatarUrl = request.AvatarUrl; // Updates Avatar for everyone
+        if (request.DateOfBirth.HasValue) user.DateOfBirth = request.DateOfBirth.Value;
         user.UpdatedAt = DateTime.UtcNow;
 
         // 2. Update Driver Specifics

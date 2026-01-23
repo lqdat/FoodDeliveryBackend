@@ -20,10 +20,12 @@ public class RestaurantsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Restaurant>>> GetRestaurants()
+    public async Task<ActionResult<IEnumerable<Restaurant>>> GetRestaurants([FromQuery] int pageIndex = 1, [FromQuery] int pageSize = 10)
     {
         return await _context.Restaurants
             .Where(r => !r.IsDeleted && r.IsApproved)
+            .Skip((pageIndex - 1) * pageSize)
+            .Take(pageSize)
             .ToListAsync();
     }
 

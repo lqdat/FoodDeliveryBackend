@@ -16,6 +16,12 @@ public partial class User
     public string FullName { get; set; } = null!;
 
     public string? AvatarUrl { get; set; }
+    
+    public DateTime? DateOfBirth { get; set; }
+    
+    public string? GoogleId { get; set; }
+    
+    public string? FacebookId { get; set; }
 
     public int Role { get; set; }
 
