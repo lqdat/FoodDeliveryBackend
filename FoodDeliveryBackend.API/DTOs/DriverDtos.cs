@@ -12,6 +12,7 @@ public class DriverProfileDto
     public bool IsOnline { get; set; }
     public bool IsVerified { get; set; }
     public decimal WalletBalance { get; set; }
+    public decimal TodayEarnings { get; set; }
     public double Rating { get; set; }
     public int CompletionRate { get; set; } // Percentage e.g. 98
     public int YearsActive { get; set; }

@@ -39,12 +39,18 @@ public class DriversController : ControllerBase
         var yearsActive = (int)((DateTime.UtcNow - driver.CreatedAt).TotalDays / 365);
         if (yearsActive < 1) yearsActive = 1; // Minimum 1 year for display or handle as 0
 
-        // Completion rate estimation
+    // Completion rate estimation
         var totalOrders = driver.TotalDeliveries;
         var cancelledOrders = await _context.Orders.CountAsync(o => o.DriverId == driver.Id && o.Status == 6);
         var completionRate = totalOrders + cancelledOrders > 0 
             ? (int)((double)totalOrders / (totalOrders + cancelledOrders) * 100) 
             : 100;
+
+        // Calculate Today's Earnings
+        var today = DateTime.UtcNow.Date;
+        var todayEarnings = await _context.DriverEarnings
+            .Where(e => e.DriverId == driver.Id && !e.IsDeleted && e.EarnedAt >= today)
+            .SumAsync(e => e.Amount);
 
         return new DriverProfileDto
         {
@@ -58,6 +64,7 @@ public class DriversController : ControllerBase
             IsOnline = driver.IsOnline,
             IsVerified = driver.IsVerified,
             WalletBalance = driver.WalletBalance,
+            TodayEarnings = todayEarnings,
             Rating = driver.Rating,
             CompletionRate = completionRate,
             YearsActive = yearsActive,
@@ -270,7 +277,8 @@ public class DriversController : ControllerBase
 
         if (period.ToLower() == "day")
         {
-            startDate = targetDate.Date;
+            // Ensure UTC date at 00:00:00
+            startDate = new DateTime(targetDate.Year, targetDate.Month, targetDate.Day, 0, 0, 0, DateTimeKind.Utc);
             endDate = startDate.AddDays(1);
             label = startDate.ToString("dd/MM/yyyy");
             
@@ -284,7 +292,7 @@ public class DriversController : ControllerBase
         }
         else if (period.ToLower() == "year")
         {
-            startDate = new DateTime(targetDate.Year, 1, 1);
+            startDate = new DateTime(targetDate.Year, 1, 1, 0, 0, 0, DateTimeKind.Utc);
             endDate = startDate.AddYears(1);
             label = $"Năm {targetDate.Year}";
 
@@ -298,7 +306,7 @@ public class DriversController : ControllerBase
         }
         else // month
         {
-            startDate = new DateTime(targetDate.Year, targetDate.Month, 1);
+            startDate = new DateTime(targetDate.Year, targetDate.Month, 1, 0, 0, 0, DateTimeKind.Utc);
             endDate = startDate.AddMonths(1);
             label = $"Tháng {targetDate.Month}, {targetDate.Year}";
 
@@ -347,17 +355,17 @@ public class DriversController : ControllerBase
 
         if (period.ToLower() == "day")
         {
-            startDate = targetDate.Date;
+            startDate = new DateTime(targetDate.Year, targetDate.Month, targetDate.Day, 0, 0, 0, DateTimeKind.Utc);
             endDate = startDate.AddDays(1);
         }
         else if (period.ToLower() == "year")
         {
-            startDate = new DateTime(targetDate.Year, 1, 1);
+            startDate = new DateTime(targetDate.Year, 1, 1, 0, 0, 0, DateTimeKind.Utc);
             endDate = startDate.AddYears(1);
         }
         else // month
         {
-            startDate = new DateTime(targetDate.Year, targetDate.Month, 1);
+            startDate = new DateTime(targetDate.Year, targetDate.Month, 1, 0, 0, 0, DateTimeKind.Utc);
             endDate = startDate.AddMonths(1);
         }
 
