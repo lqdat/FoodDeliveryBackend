@@ -11,7 +11,8 @@ var builder = WebApplication.CreateBuilder(args);
 var connectionString = $"Host={Environment.GetEnvironmentVariable("DB_HOST")};Port={Environment.GetEnvironmentVariable("DB_PORT")};Database={Environment.GetEnvironmentVariable("DB_NAME")};Username={Environment.GetEnvironmentVariable("DB_USER")};Password={Environment.GetEnvironmentVariable("DB_PASSWORD")}";
 
 builder.Services.AddDbContext<FoodDeliveryDbContext>(options =>
-    options.UseNpgsql(connectionString));
+    options.UseNpgsql(connectionString)
+           .ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning)));
 
 // 2. CORS (Allow React Native access)
 builder.Services.AddCors(options =>
@@ -100,7 +101,7 @@ if (app.Environment.IsDevelopment())
         var dbContext = scope.ServiceProvider.GetRequiredService<FoodDeliveryDbContext>();
         try
         {
-            dbContext.Database.Migrate(); // Auto-apply migrations
+            dbContext.Database.Migrate(); 
             await DbSeeder.SeedAsync(dbContext);
         }
         catch (Exception ex)

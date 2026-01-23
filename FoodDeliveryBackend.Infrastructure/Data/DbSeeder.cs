@@ -24,6 +24,36 @@ public static class DbSeeder
         {
             var now = DateTime.UtcNow;
 
+            // 0. RESET DATA (Requested by User)
+            // ---------------------------------------------------------
+            Log("CLEANING DATABASE FOR RESET...");
+            Console.WriteLine("Cleaning database for reset...");
+            
+            // Clear in order of dependence
+            context.OrderTrackings.RemoveRange(context.OrderTrackings);
+            context.OrderItems.RemoveRange(context.OrderItems);
+            context.Reviews.RemoveRange(context.Reviews);
+            context.ChatMessages.RemoveRange(context.ChatMessages);
+            context.DriverEarnings.RemoveRange(context.DriverEarnings);
+            context.Orders.RemoveRange(context.Orders);
+            
+            context.CartItems.RemoveRange(context.CartItems);
+            context.Carts.RemoveRange(context.Carts);
+            context.SearchHistories.RemoveRange(context.SearchHistories);
+            context.Notifications.RemoveRange(context.Notifications);
+            
+            context.MenuItems.RemoveRange(context.MenuItems);
+            context.MenuCategories.RemoveRange(context.MenuCategories);
+            context.Promotions.RemoveRange(context.Promotions);
+            context.CustomerVouchers.RemoveRange(context.CustomerVouchers);
+            context.Vouchers.RemoveRange(context.Vouchers);
+            context.Restaurants.RemoveRange(context.Restaurants);
+            context.FoodCategories.RemoveRange(context.FoodCategories);
+            
+            await context.SaveChangesAsync();
+            Log("Database cleared.");
+            Console.WriteLine("Database cleared.");
+
             // 1. Roles & Users
             // ---------------------------------------------------------
             // Ensure Roles (Implicitly handled by User.Role integer for this MVP)
@@ -256,193 +286,227 @@ public static class DbSeeder
                 }
             }
             await context.SaveChangesAsync();
-            await context.SaveChangesAsync();
             Log($"Seeded/Updated {categoryDefinitions.Count} categories with Icons and Colors.");
-
-            // Self-Correct: Remove duplicates if any (Safety check)
-            var duplicateCats = await context.FoodCategories
-                .GroupBy(c => c.Name)
-                .Where(g => g.Count() > 1)
-                .SelectMany(g => g.Skip(1)) // Keep one, select the rest
-                .ToListAsync();
-
-            if (duplicateCats.Any())
-            {
-                context.FoodCategories.RemoveRange(duplicateCats);
-                await context.SaveChangesAsync();
-                Log($"Removed {duplicateCats.Count} duplicate categories.");
-            }
 
 
             // ---------------------------------------------------------
             // 3. Restaurants & Menu Items
             // ---------------------------------------------------------
+            // ---------------------------------------------------------
+            // 3. Restaurants & Menu Items (Consolidated & Robust)
+            // ---------------------------------------------------------
             if (merchantProfile != null)
             {
-                // Retrieve Categories for mapping
                 var cats = await context.FoodCategories.ToListAsync();
-                
-                var restaurants = new List<Restaurant>
+                Restaurant? comTamRest = null;
+                var targetRestaurants = new List<dynamic>
                 {
-                    new Restaurant 
-                    { 
-                        Id = Guid.NewGuid(), 
-                        MerchantId = merchantProfile.Id,
+                    new { 
                         Name = "Cơm Tấm Sài Gòn", 
-                        CategoryId = cats.FirstOrDefault(c => c.Name == "Cơm")?.Id, // Link to Cơm
+                        Category = "Cơm", 
                         ImageUrl = "https://images.unsplash.com/photo-1590301157890-4810ed352733",
                         Address = "123 Nguyễn Văn Cừ, Q.5",
-                        Rating = 4.8, RatingCount = 1200, DeliveryTime = 20, DeliveryFee = 15000, MinPrice = 35000, Distance = 2.5,
+                        Rating = 4.8, RatingCount = 1200, DeliveryTime = 20, DeliveryFee = 15000m, MinPrice = 35000m, Distance = 2.5,
                         Tags = new[] { "Cơm Tấm", "Sườn Nướng", "Ăn Trưa" },
-                        CreatedAt = now, IsApproved = true, IsOpen = true
+                        MenuItems = new List<dynamic> {
+                            new { Name = "Cơm Sườn", Price = 45000m, Category = "Món Chính", Desc = "Cơm sườn nướng than hồng" },
+                            new { Name = "Cơm Bì Chả", Price = 40000m, Category = "Món Chính", Desc = "Cơm bì chả truyền thống" },
+                            new { Name = "Cơm Gà Xối Mỡ", Price = 42000m, Category = "Món Chính", Desc = "Gà chiên giòn rụm" },
+                            new { Name = "Cơm Ba Rọi Nướng", Price = 48000m, Category = "Món Chính", Desc = "Ba rọi nướng đậm đà" },
+                            new { Name = "Cơm Sườn Non Kho", Price = 50000m, Category = "Món Chính", Desc = "Sườn non kho tộ" },
+                            new { Name = "Canh Khổ Qua", Price = 15000m, Category = "Món Phụ", Desc = "Canh khổ qua nhồi thịt" },
+                            new { Name = "Trứng Ốp La", Price = 5000m, Category = "Món Phụ", Desc = "Trứng gà ta" },
+                            new { Name = "Lạp Xưởng", Price = 10000m, Category = "Món Phụ", Desc = "1 cây lạp xưởng tươi" },
+                            new { Name = "Canh Rong Biển", Price = 12000m, Category = "Món Phụ", Desc = "Canh rong biển thịt bằm" },
+                            new { Name = "Trà Đá", Price = 2000m, Category = "Đồ Uống", Desc = "Mát lạnh" },
+                            new { Name = "Nước Sâm", Price = 10000m, Category = "Đồ Uống", Desc = "Sâm lạnh nhà nấu" }
+                        }
                     },
-                    new Restaurant 
-                    { 
-                        Id = Guid.NewGuid(), 
-                        MerchantId = merchantProfile.Id,
+                    new { 
                         Name = "KFC - Gà Rán", 
-                        CategoryId = cats.FirstOrDefault(c => c.Name == "Ăn Vặt")?.Id, // Fast Food mapped to Ăn Vặt or we can add separate
+                        Category = "Ăn Vặt", 
                         ImageUrl = "https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec",
                         Address = "Lotte Mart, Q.7",
-                        Rating = 4.6, RatingCount = 2000, DeliveryTime = 30, DeliveryFee = 20000, MinPrice = 40000, Distance = 5.0,
-                         Tags = new[] { "Gà Rán", "KFC", "Fast Food" },
-                        CreatedAt = now, IsApproved = true, IsOpen = true
+                        Rating = 4.6, RatingCount = 2000, DeliveryTime = 30, DeliveryFee = 20000m, MinPrice = 40000m, Distance = 5.0,
+                        Tags = new[] { "Gà Rán", "KFC", "Fast Food" },
+                        MenuItems = new List<dynamic> {
+                            new { Name = "Combo Gà Rán A", Price = 89000m, Category = "Món Chính", Desc = "2 Gà + 1 Khoai + 1 Pepsi" },
+                            new { Name = "Combo Gà Rán B", Price = 159000m, Category = "Món Chính", Desc = "4 Gà + 2 Khoai + 2 Pepsi" },
+                            new { Name = "Burger Tôm", Price = 45000m, Category = "Món Chính", Desc = "Burger tôm giòn tan" },
+                            new { Name = "Burger Zinger", Price = 59000m, Category = "Món Chính", Desc = "Burger gà cay trứ danh" },
+                            new { Name = "Cơm Gà Quay", Price = 55000m, Category = "Món Chính", Desc = "Cơm gà quay sốt tiêu" },
+                            new { Name = "Mỳ Ý Gà Viên", Price = 45000m, Category = "Món Chính", Desc = "Mỳ ý sốt gà viên" },
+                            new { Name = "Khoai Tây Chiên (Vừa)", Price = 25000m, Category = "Món Phụ", Desc = "Giòn rụm" },
+                            new { Name = "Khoai Tây Chiên (Lớn)", Price = 35000m, Category = "Món Phụ", Desc = "Size lớn chia sẻ" },
+                            new { Name = "Gà Popcorn", Price = 39000m, Category = "Món Phụ", Desc = "Gà viên vui miệng" },
+                            new { Name = "Salad Bắp Cải", Price = 15000m, Category = "Món Phụ", Desc = "Coleslaw tươi mát" },
+                            new { Name = "Khoai Tây Nghiền", Price = 19000m, Category = "Món Phụ", Desc = "Khoai tây nghiền sốt nâu" },
+                            new { Name = "Pepsi Tươi", Price = 15000m, Category = "Đồ Uống", Desc = "Ly vừa" },
+                            new { Name = "7Up", Price = 15000m, Category = "Đồ Uống", Desc = "Ly vừa" }
+                        }
                     },
-                     new Restaurant 
-                    { 
-                        Id = Guid.NewGuid(), 
-                        MerchantId = merchantProfile.Id,
+                    new { 
                         Name = "Koí Thé", 
-                        CategoryId = cats.FirstOrDefault(c => c.Name == "Trà Sữa")?.Id,
+                        Category = "Trà Sữa", 
                         ImageUrl = "https://images.unsplash.com/photo-1558359250-9aa4e09f5fa4",
                         Address = "Vivo City, Q.7",
-                        Rating = 4.9, RatingCount = 500, DeliveryTime = 15, DeliveryFee = 10000, MinPrice = 30000, Distance = 1.0,
-                         Tags = new[] { "Trà Sữa", "Macchiato", "Trân Châu" },
-                        CreatedAt = now, IsApproved = true, IsOpen = true
+                        Rating = 4.9, RatingCount = 500, DeliveryTime = 15, DeliveryFee = 10000m, MinPrice = 30000m, Distance = 1.0,
+                        Tags = new[] { "Trà Sữa", "Macchiato", "Trân Châu" },
+                        MenuItems = new List<dynamic> {
+                            new { Name = "Hồng Trà Macchiato", Price = 35000m, Category = "Món Chính", Desc = "Size M - Lớp kem béo ngậy" },
+                            new { Name = "Lục Trà Trân Châu", Price = 40000m, Category = "Món Chính", Desc = "Thơm ngon đậm vị" },
+                            new { Name = "Sữa Tươi Trân Châu", Price = 55000m, Category = "Món Chính", Desc = "Đường đen Tiger" },
+                            new { Name = "Oolong Macchiato", Price = 42000m, Category = "Món Chính", Desc = "Trà Oolong đậm đà" },
+                            new { Name = "Trà Xanh Chanh Dây", Price = 45000m, Category = "Món Chính", Desc = "Chua ngọt sảng khoái" },
+                            new { Name = "Matcha Latte", Price = 52000m, Category = "Món Chính", Desc = "Matcha Nhật Bản" },
+                            new { Name = "Trân Châu Hoàng Kim", Price = 10000m, Category = "Món Phụ", Desc = "Dai ngon" },
+                            new { Name = "Thạch Dừa", Price = 8000m, Category = "Món Phụ", Desc = "Giòn giòn" },
+                            new { Name = "Lô Hội", Price = 8000m, Category = "Món Phụ", Desc = "Tươi mát" },
+                            new { Name = "Konjac Jelly", Price = 12000m, Category = "Món Phụ", Desc = "Thạch dẻo" },
+                            new { Name = "Trà Đào", Price = 45000m, Category = "Đồ Uống", Desc = "Có miếng đào tươi" }
+                        }
                     },
-                    new Restaurant 
-                    { 
-                        Id = Guid.NewGuid(), 
-                        MerchantId = merchantProfile.Id,
+                    new { 
                         Name = "Pizza Hut", 
-                        CategoryId = cats.FirstOrDefault(c => c.Name == "Ăn Vặt")?.Id, // Pizza mapped to Ăn Vặt
+                        Category = "Ăn Vặt", 
                         ImageUrl = "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38",
                         Address = "345 Nguyễn Thị Thập, Q.7",
-                        Rating = 4.5, RatingCount = 850, DeliveryTime = 40, DeliveryFee = 25000, MinPrice = 100000, Distance = 3.2,
-                         Tags = new[] { "Pizza", "Mỳ Ý", "Fast Food" },
-                        CreatedAt = now, IsApproved = true, IsOpen = true
+                        Rating = 4.5, RatingCount = 850, DeliveryTime = 40, DeliveryFee = 25000m, MinPrice = 100000m, Distance = 3.2,
+                        Tags = new[] { "Pizza", "Mỳ Ý", "Fast Food" },
+                        MenuItems = new List<dynamic> {
+                            new { Name = "Pizza Hải Sản (M)", Price = 159000m, Category = "Món Chính", Desc = "Tôm, mực, thanh cua" },
+                            new { Name = "Pizza Hải Sản (L)", Price = 239000m, Category = "Món Chính", Desc = "Size Lớn" },
+                            new { Name = "Mỳ Ý Bò Bằm", Price = 89000m, Category = "Món Chính", Desc = "Sốt bò bằm cà chua" },
+                            new { Name = "Pizza Pepperoni", Price = 139000m, Category = "Món Chính", Desc = "Xúc xích Ý cay nhẹ" },
+                            new { Name = "Pizza Phô Mai Cao Cấp", Price = 149000m, Category = "Món Chính", Desc = "3 loại phô mai" },
+                            new { Name = "Pizza Rau Củ", Price = 119000m, Category = "Món Chính", Desc = "Dành cho người ăn chay" },
+                            new { Name = "Salad Cá Ngừ", Price = 59000m, Category = "Món Phụ", Desc = "Rau tươi sốt mayo" },
+                            new { Name = "Bánh Mì Bơ Tỏi", Price = 39000m, Category = "Món Phụ", Desc = "Thơm lừng" },
+                            new { Name = "Khoai Tây Cười", Price = 45000m, Category = "Món Phụ", Desc = "Vui nhộn cho bé" },
+                            new { Name = "Mực Chiên Giòn", Price = 79000m, Category = "Món Phụ", Desc = "Mực vòng chiên bột" },
+                            new { Name = "Coca Cola", Price = 20000m, Category = "Đồ Uống", Desc = "Chai 390ml" },
+                            new { Name = "Sprite", Price = 20000m, Category = "Đồ Uống", Desc = "Chai 390ml" }
+                        }
                     },
-                     new Restaurant 
-                    { 
-                        Id = Guid.NewGuid(), 
-                        MerchantId = merchantProfile.Id,
+                    new { 
                         Name = "Highlands Coffee", 
-                        CategoryId = cats.FirstOrDefault(c => c.Name == "Trà Sữa")?.Id, // Using Milk Tea/Drinks category
+                        Category = "Trà Sữa", 
                         ImageUrl = "https://images.unsplash.com/photo-1559496417-e7f25cb247f3",
                         Address = "Crescent Mall, Q.7",
-                        Rating = 4.7, RatingCount = 1500, DeliveryTime = 25, DeliveryFee = 15000, MinPrice = 29000, Distance = 1.5,
-                         Tags = new[] { "Cà Phê", "Trà", "Bánh" },
-                        CreatedAt = now, IsApproved = true, IsOpen = true
+                        Rating = 4.7, RatingCount = 1500, DeliveryTime = 25, DeliveryFee = 15000m, MinPrice = 29000m, Distance = 1.5,
+                        Tags = new[] { "Cà Phê", "Trà", "Bánh" },
+                        MenuItems = new List<dynamic> {
+                            new { Name = "Phin Sữa Đá", Price = 29000m, Category = "Món Chính", Desc = "Cà phê phin truyền thống" },
+                            new { Name = "Phin Đen Đá", Price = 29000m, Category = "Món Chính", Desc = "Đậm đà tỉnh táo" },
+                            new { Name = "Trà Sen Vàng", Price = 45000m, Category = "Món Chính", Desc = "Trà sen kem sữa" },
+                            new { Name = "Freeze Trà Xanh", Price = 55000m, Category = "Món Chính", Desc = "Đá xay mát lạnh" },
+                            new { Name = "Trà Thạch Đào", Price = 45000m, Category = "Món Chính", Desc = "Thanh mát giải nhiệt" },
+                            new { Name = "Phindi Hạnh Nhân", Price = 42000m, Category = "Món Chính", Desc = "Hương hạnh nhân thơm béo" },
+                            new { Name = "Bánh Mì Thịt Nướng", Price = 19000m, Category = "Món Phụ", Desc = "Bánh mì Việt Nam" },
+                            new { Name = "Bánh Mì Xíu Mại", Price = 19000m, Category = "Món Phụ", Desc = "Xíu mại sốt cà" },
+                            new { Name = "Mousse Đào", Price = 35000m, Category = "Món Phụ", Desc = "Bánh ngọt tráng miệng" },
+                            new { Name = "Bánh Chuối", Price = 25000m, Category = "Món Phụ", Desc = "Bánh chuối nướng" },
+                            new { Name = "Phô Mai Cà Phê", Price = 29000m, Category = "Món Phụ", Desc = "Bánh phô mai vị cafe" },
+                            new { Name = "Bạc Xỉu", Price = 29000m, Category = "Đồ Uống", Desc = "Nhiều sữa ít cafe" },
+                            new { Name = "Sữa Tươi", Price = 25000m, Category = "Đồ Uống", Desc = "Sữa tươi Vinamilk" }
+                        }
                     }
                 };
 
-                foreach (var r in restaurants)
+                foreach (var restData in targetRestaurants)
                 {
-                    if (!context.Restaurants.Any(db => db.Name == r.Name && db.MerchantId == merchantProfile.Id))
-                    {
-                        context.Restaurants.Add(r);
-                    }
-                }
-                await context.SaveChangesAsync();
+                    string restName = restData.Name;
+                    string restCategory = restData.Category;
 
-                // 4. Menus - REFACTORED:
-                // We skip menu creation here because we want to run the robust "Enrichment" block below
-                // for BOTH new and existing restaurants. This ensures idempotency and consistent IDs.
+                    // 1. Upsert Restaurant
+                    var rest = await context.Restaurants
+                                    .Include(r => r.MenuCategories)
+                                    .ThenInclude(mc => mc.MenuItems)
+                                    .FirstOrDefaultAsync(r => r.Name == restName);
 
-                Log($"Ensured {restaurants.Count} restaurants exist (Upsert).");
-            }
-            if (true)
-            {
-                Console.WriteLine("Restaurants already exist. Checking for Menu updates...");
-                
-                // Enrichment Logic for existing restaurants
-                var cats = await context.FoodCategories.ToListAsync();
-                var dbRestaurants = await context.Restaurants
-                                        .Include(r => r.MenuCategories)
-                                        .ThenInclude(mc => mc.MenuItems)
-                                        .Where(r => r.MerchantId == merchantProfile.Id)
-                                        .ToListAsync();
-
-                foreach (var rest in dbRestaurants)
-                {
-                     // 1. Ensure Categories
-                     var mainCat = rest.MenuCategories.FirstOrDefault(c => c.Name == "Món Chính");
-                     if (mainCat == null) { mainCat = new MenuCategory { Id = Guid.NewGuid(), RestaurantId = rest.Id, Name = "Món Chính", DisplayOrder = 1 }; context.MenuCategories.Add(mainCat); }
-                     
-                     var sideCat = rest.MenuCategories.FirstOrDefault(c => c.Name == "Món Phụ");
-                     if (sideCat == null) { sideCat = new MenuCategory { Id = Guid.NewGuid(), RestaurantId = rest.Id, Name = "Món Phụ", DisplayOrder = 2 }; context.MenuCategories.Add(sideCat); }
-                     
-                     var drinkCat = rest.MenuCategories.FirstOrDefault(c => c.Name == "Đồ Uống");
-                     if (drinkCat == null) { drinkCat = new MenuCategory { Id = Guid.NewGuid(), RestaurantId = rest.Id, Name = "Đồ Uống", DisplayOrder = 3 }; context.MenuCategories.Add(drinkCat); }
-
-                     // 2. Add New Items (Check by Name)
-                     var potentialItems = new List<MenuItem>();
-
-                    if (rest.Name.Contains("Cơm"))
+                    if (rest == null)
                     {
-                        // Main
-                        potentialItems.Add(new MenuItem { Id = Guid.NewGuid(), MenuCategoryId = mainCat.Id, Name = "Cơm Sườn", Price = 45000, ImageUrl = "https://images.unsplash.com/photo-1590301157890-4810ed352733", Description = "Cơm sườn nướng than hồng" });
-                        potentialItems.Add(new MenuItem { Id = Guid.NewGuid(), MenuCategoryId = mainCat.Id, Name = "Cơm Bì Chả", Price = 40000, ImageUrl = "https://images.unsplash.com/photo-1590301157890-4810ed352733", Description = "Cơm bì chả truyền thống" });
-                        // New Items
-                        potentialItems.Add(new MenuItem { Id = Guid.NewGuid(), MenuCategoryId = mainCat.Id, Name = "Cơm Ba Rọi Nướng", Price = 48000, ImageUrl = "https://images.unsplash.com/photo-1590301157890-4810ed352733", Description = "Ba rọi nướng đậm đà" });
-                        potentialItems.Add(new MenuItem { Id = Guid.NewGuid(), MenuCategoryId = mainCat.Id, Name = "Cơm Sườn Non Kho", Price = 50000, ImageUrl = "https://images.unsplash.com/photo-1590301157890-4810ed352733", Description = "Sườn non kho tộ" });
-                        // Side
-                        potentialItems.Add(new MenuItem { Id = Guid.NewGuid(), MenuCategoryId = sideCat.Id, Name = "Canh Khổ Qua", Price = 15000, ImageUrl = "https://images.unsplash.com/photo-1606850780554-b55ea2faa7b9", Description = "Canh khổ qua nhồi thịt" });
-                        potentialItems.Add(new MenuItem { Id = Guid.NewGuid(), MenuCategoryId = sideCat.Id, Name = "Lạp Xưởng", Price = 10000, ImageUrl = "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38", Description = "1 cây lạp xưởng tươi" });
-                        potentialItems.Add(new MenuItem { Id = Guid.NewGuid(), MenuCategoryId = sideCat.Id, Name = "Canh Rong Biển", Price = 12000, ImageUrl = "https://images.unsplash.com/photo-1606850780554-b55ea2faa7b9", Description = "Canh rong biển thịt bằm" });
-                        // Drink
-                        potentialItems.Add(new MenuItem { Id = Guid.NewGuid(), MenuCategoryId = drinkCat.Id, Name = "Nước Sâm", Price = 10000, ImageUrl = "https://images.unsplash.com/photo-1544145945-f90425340c7e", Description = "Sâm lạnh nhà nấu" });
-                    }
-                    else if (rest.Name.Contains("KFC"))
-                    {
-                        potentialItems.Add(new MenuItem { Id = Guid.NewGuid(), MenuCategoryId = mainCat.Id, Name = "Burger Zinger", Price = 59000, ImageUrl = "https://images.unsplash.com/photo-1568901346375-23c9450c58cd", Description = "Burger gà cay trứ danh" });
-                        potentialItems.Add(new MenuItem { Id = Guid.NewGuid(), MenuCategoryId = mainCat.Id, Name = "Mỳ Ý Gà Viên", Price = 45000, ImageUrl = "https://images.unsplash.com/photo-1551183053-bf91a1d81141", Description = "Mỳ ý sốt gà viên" });
-                        potentialItems.Add(new MenuItem { Id = Guid.NewGuid(), MenuCategoryId = sideCat.Id, Name = "Salad Bắp Cải", Price = 15000, ImageUrl = "https://images.unsplash.com/photo-1512621776951-a57141f2eefd", Description = "Coleslaw tươi mát" });
-                        potentialItems.Add(new MenuItem { Id = Guid.NewGuid(), MenuCategoryId = sideCat.Id, Name = "Khoai Tây Nghiền", Price = 19000, ImageUrl = "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38", Description = "Khoai tây nghiền sốt nâu" });
-                    }
-                    else if (rest.Name.Contains("Koí"))
-                    {
-                        potentialItems.Add(new MenuItem { Id = Guid.NewGuid(), MenuCategoryId = mainCat.Id, Name = "Oolong Macchiato", Price = 42000, ImageUrl = "https://images.unsplash.com/photo-1558359250-9aa4e09f5fa4", Description = "Trà Oolong đậm đà" });
-                        potentialItems.Add(new MenuItem { Id = Guid.NewGuid(), MenuCategoryId = mainCat.Id, Name = "Matcha Latte", Price = 52000, ImageUrl = "https://images.unsplash.com/photo-1556679343-c7306c1976bc", Description = "Matcha Nhật Bản" });
-                        potentialItems.Add(new MenuItem { Id = Guid.NewGuid(), MenuCategoryId = sideCat.Id, Name = "Thạch Dừa", Price = 8000, ImageUrl = "https://images.unsplash.com/photo-1558359250-9aa4e09f5fa4", Description = "Giòn giòn" });
-                    }
-                    else if (rest.Name.Contains("Pizza"))
-                    {
-                        potentialItems.Add(new MenuItem { Id = Guid.NewGuid(), MenuCategoryId = mainCat.Id, Name = "Pizza Phô Mai Cao Cấp", Price = 149000, ImageUrl = "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38", Description = "3 loại phô mai" });
-                        potentialItems.Add(new MenuItem { Id = Guid.NewGuid(), MenuCategoryId = mainCat.Id, Name = "Pizza Rau Củ", Price = 119000, ImageUrl = "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38", Description = "Dành cho người ăn chay" });
-                        potentialItems.Add(new MenuItem { Id = Guid.NewGuid(), MenuCategoryId = sideCat.Id, Name = "Khoai Tây Cười", Price = 45000, ImageUrl = "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38", Description = "Vui nhộn cho bé" });
-                        potentialItems.Add(new MenuItem { Id = Guid.NewGuid(), MenuCategoryId = drinkCat.Id, Name = "Sprite", Price = 20000, ImageUrl = "https://images.unsplash.com/photo-1544145945-f90425340c7e", Description = "Chai 390ml" });
-                    }
-                    else if (rest.Name.Contains("Highlands"))
-                    {
-                        potentialItems.Add(new MenuItem { Id = Guid.NewGuid(), MenuCategoryId = mainCat.Id, Name = "Phin Đen Đá", Price = 29000, ImageUrl = "https://images.unsplash.com/photo-1559496417-e7f25cb247f3", Description = "Đậm đà tỉnh táo" });
-                         potentialItems.Add(new MenuItem { Id = Guid.NewGuid(), MenuCategoryId = mainCat.Id, Name = "Trà Thạch Đào", Price = 45000, ImageUrl = "https://images.unsplash.com/photo-1544145945-f90425340c7e", Description = "Thanh mát giải nhiệt" });
-                         potentialItems.Add(new MenuItem { Id = Guid.NewGuid(), MenuCategoryId = sideCat.Id, Name = "Bánh Mì Xíu Mại", Price = 19000, ImageUrl = "https://images.unsplash.com/photo-1549449234-58d0092c6cc1", Description = "Xíu mại sốt cà" });
-                         potentialItems.Add(new MenuItem { Id = Guid.NewGuid(), MenuCategoryId = sideCat.Id, Name = "Bánh Chuối", Price = 25000, ImageUrl = "https://images.unsplash.com/photo-1512058564366-18510be2db19", Description = "Bánh chuối nướng" });
-                    }
-
-                    // Add items if not exists
-                    foreach (var item in potentialItems)
-                    {
-                        if (!rest.MenuCategories.SelectMany(mc => mc.MenuItems).Any(i => i.Name == item.Name))
+                        rest = new Restaurant
                         {
-                            context.MenuItems.Add(item);
+                            Id = Guid.NewGuid(),
+                            MerchantId = merchantProfile.Id,
+                            Name = restName,
+                            CreatedAt = now,
+                            IsApproved = true,
+                            IsOpen = true
+                        };
+                        context.Restaurants.Add(rest);
+                    }
+
+                    // Update fields
+                    rest.MerchantId = merchantProfile.Id; // Ensure ownership
+                    rest.CategoryId = cats.FirstOrDefault(c => c.Name == restCategory)?.Id;
+                    rest.ImageUrl = restData.ImageUrl;
+                    rest.Address = restData.Address;
+                    rest.Rating = (double)restData.Rating;
+                    rest.RatingCount = (int)restData.RatingCount;
+                    rest.DeliveryTime = (int)restData.DeliveryTime;
+                    rest.DeliveryFee = (decimal)restData.DeliveryFee;
+                    rest.MinPrice = (decimal)restData.MinPrice;
+                    rest.Distance = (double)restData.Distance;
+                    rest.Tags = (string[])restData.Tags;
+
+                    await context.SaveChangesAsync();
+                    if (restName == "Cơm Tấm Sài Gòn") comTamRest = rest;
+
+                    // 2. Ensure Menu Categories
+                    var catNames = new[] { "Món Chính", "Món Phụ", "Đồ Uống" };
+                    foreach (var cn in catNames)
+                    {
+                        if (!rest.MenuCategories.Any(c => c.Name == cn))
+                        {
+                            context.MenuCategories.Add(new MenuCategory
+                            {
+                                Id = Guid.NewGuid(),
+                                RestaurantId = rest.Id,
+                                Name = cn,
+                                DisplayOrder = Array.IndexOf(catNames, cn) + 1
+                            });
                         }
                     }
+                    await context.SaveChangesAsync();
+                    
+                    // Reload to get new categories
+                    rest = await context.Restaurants
+                                    .Include(r => r.MenuCategories)
+                                    .ThenInclude(mc => mc.MenuItems)
+                                    .FirstOrDefaultAsync(r => r.Id == rest.Id);
+
+                    // 3. Upsert Menu Items
+                    foreach (var itemData in restData.MenuItems)
+                    {
+                        string targetCatName = itemData.Category;
+                        string itemName = itemData.Name;
+
+                        var targetCat = rest.MenuCategories.FirstOrDefault(c => c.Name == targetCatName);
+                        if (targetCat != null)
+                        {
+                            var item = targetCat.MenuItems.FirstOrDefault(i => i.Name == itemName);
+                            if (item == null)
+                            {
+                                item = new MenuItem
+                                {
+                                    Id = Guid.NewGuid(),
+                                    MenuCategoryId = targetCat.Id,
+                                    Name = itemName
+                                };
+                                context.MenuItems.Add(item);
+                            }
+
+                            item.Price = (decimal)itemData.Price;
+                            item.Description = (string)itemData.Desc;
+                            item.ImageUrl = "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38"; // Placeholder
+                        }
+                    }
+                    await context.SaveChangesAsync();
                 }
-                
-                await context.SaveChangesAsync();
-                Log("Enriched menus for existing restaurants.");
+
+                Log("Seeded/Updated all 5 target restaurants and their complete menus.");
             }
 
             // ---------------------------------------------------------
@@ -609,7 +673,7 @@ public static class DbSeeder
             // ---------------------------------------------------------
             // 8. Seed Notifications (New)
             // ---------------------------------------------------------
-            if (!await context.Notifications.AnyAsync(n => n.UserId == customerUser.Id))
+            if (customerUser != null)
             {
                 var notifs = new List<Notification>
                 {
@@ -702,9 +766,10 @@ public static class DbSeeder
         }
         catch (Exception ex)
         {
-            Log($"Error seeding data: {ex.Message} {ex.StackTrace}");
+            var detail = ex.InnerException != null ? $"\nInner: {ex.InnerException.Message}" : "";
+            Log($"Error seeding data: {ex.Message}{detail}\n{ex.StackTrace}");
             Console.WriteLine($"Error seeding data: {ex.Message}");
-            throw; // Rethrow to ensure startup fails? Or log and continue.
+            throw; 
         }
     }
 }

@@ -27,7 +27,9 @@ namespace FoodDeliveryBackend.API.Controllers
         [HttpGet]
         public async Task<ActionResult<List<NotificationDto>>> GetNotifications([FromQuery] int limit = 20, [FromQuery] int offset = 0)
         {
-            var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var userIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdStr)) return Unauthorized();
+            var userId = Guid.Parse(userIdStr);
 
             var notifs = await _context.Notifications
                 .Where(n => n.UserId == userId && !n.IsDeleted)
