@@ -441,7 +441,10 @@ public class DriversController : ControllerBase
             Distance = o.Restaurant.Distance,
             ItemCount = o.OrderItems.Count,
             CreatedAt = o.CreatedAt
-            // GET: api/drivers/activity-history
+        }).ToList();
+    }
+
+    // GET: api/drivers/activity-history
     [HttpGet("activity-history")]
     public async Task<ActionResult<DriverActivityResponseDto>> GetActivityHistory([FromQuery] string filter = "all")
     {
@@ -517,8 +520,7 @@ public class DriversController : ControllerBase
         if (date.Date == today.AddDays(-1)) return "Hôm qua";
         return date.ToString("dd/MM/yyyy");
     }
-}).ToList();
-    }
+
 
     // GET: api/drivers/wallet
     [HttpGet("wallet")]
