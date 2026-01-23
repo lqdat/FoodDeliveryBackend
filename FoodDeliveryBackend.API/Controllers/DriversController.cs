@@ -441,7 +441,83 @@ public class DriversController : ControllerBase
             Distance = o.Restaurant.Distance,
             ItemCount = o.OrderItems.Count,
             CreatedAt = o.CreatedAt
-        }).ToList();
+            // GET: api/drivers/activity-history
+    [HttpGet("activity-history")]
+    public async Task<ActionResult<DriverActivityResponseDto>> GetActivityHistory([FromQuery] string filter = "all")
+    {
+        var driver = await GetCurrentDriverAsync();
+        if (driver == null) return NotFound("Driver profile not found.");
+
+        var query = _context.DriverEarnings
+            .Include(e => e.Order)
+                .ThenInclude(o => o!.Restaurant)
+            .Where(e => e.DriverId == driver.Id && !e.IsDeleted && e.Type == 1); // Type 1 = Order Income
+
+        // Apply Filters
+        var now = DateTime.UtcNow;
+        var today = new DateTime(now.Year, now.Month, now.Day, 0, 0, 0, DateTimeKind.Utc);
+        
+        switch (filter.ToLower())
+        {
+            case "today":
+                query = query.Where(e => e.EarnedAt >= today);
+                break;
+            case "yesterday":
+                var yesterday = today.AddDays(-1);
+                query = query.Where(e => e.EarnedAt >= yesterday && e.EarnedAt < today);
+                break;
+            case "week":
+                var startOfWeek = today.AddDays(-(int)now.DayOfWeek);
+                query = query.Where(e => e.EarnedAt >= startOfWeek);
+                break;
+            case "all":
+            default:
+                // No filter, maybe limit to last 3 months for performance if needed
+                break;
+        }
+
+        var earnings = await query
+            .OrderByDescending(e => e.EarnedAt)
+            .ToListAsync();
+
+        // Calculate Summary
+        var totalIncome = earnings.Sum(e => e.Amount);
+        var totalOrders = earnings.Count;
+
+        // Group by Date
+        var groups = earnings.GroupBy(e => e.EarnedAt.Date)
+            .Select(g => new DriverActivityGroupDto
+            {
+                DateLabel = GetDateLabel(g.Key, today),
+                OrderCount = g.Count(),
+                Items = g.Select(e => new DriverActivityItemDto
+                {
+                    OrderId = e.OrderId ?? Guid.Empty,
+                    RestaurantName = e.Order?.Restaurant?.Name ?? "Hệ thống",
+                    RestaurantImageUrl = e.Order?.Restaurant?.ImageUrl ?? "https://placeholder.com/food", 
+                    OrderNumber = e.Order?.OrderNumber ?? "N/A",
+                    Time = e.EarnedAt.ToLocalTime().ToString("hh:mm tt"),
+                    Amount = e.Amount,
+                    StatusText = "Hoàn thành"
+                }).ToList()
+            })
+            .ToList();
+
+        return new DriverActivityResponseDto
+        {
+            TotalIncome = totalIncome,
+            TotalOrders = totalOrders,
+            Groups = groups
+        };
+    }
+
+    private string GetDateLabel(DateTime date, DateTime today)
+    {
+        if (date.Date == today) return "Hôm nay";
+        if (date.Date == today.AddDays(-1)) return "Hôm qua";
+        return date.ToString("dd/MM/yyyy");
+    }
+}).ToList();
     }
 
     // GET: api/drivers/wallet

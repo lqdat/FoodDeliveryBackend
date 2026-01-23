@@ -142,3 +142,28 @@ public class DriverTransactionDto
     public string Description { get; set; } = null!;
     public DateTime CreatedAt { get; set; }
 }
+
+public class DriverActivityResponseDto
+{
+    public decimal TotalIncome { get; set; }
+    public int TotalOrders { get; set; }
+    public List<DriverActivityGroupDto> Groups { get; set; } = new();
+}
+
+public class DriverActivityGroupDto
+{
+    public string DateLabel { get; set; } = null!; // "Hôm nay", "Hôm qua", "22/01/2026"
+    public int OrderCount { get; set; } // "3 đơn"
+    public List<DriverActivityItemDto> Items { get; set; } = new();
+}
+
+public class DriverActivityItemDto
+{
+    public Guid OrderId { get; set; }
+    public string RestaurantName { get; set; } = null!;
+    public string RestaurantImageUrl { get; set; } = null!;
+    public string OrderNumber { get; set; } = null!;
+    public string Time { get; set; } = null!;
+    public decimal Amount { get; set; }
+    public string StatusText { get; set; } = "Hoàn thành";
+}
