@@ -29,8 +29,8 @@ public class LocationsController : ControllerBase
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<AddressDto>>> GetMyAddresses(
-        [FromQuery] string? label, // Filter by label (Home, Work, etc.)
-        [FromQuery] string? sortBy) // "recent" | "created"
+        [FromQuery] string? filter, // "recent" | "saved"
+        [FromQuery] string? sortBy) // "recent" | "created" (optional, mainly for "saved" list sorting)
     {
         var customer = await GetCurrentCustomerAsync();
         if (customer == null) return Unauthorized();
@@ -38,26 +38,30 @@ public class LocationsController : ControllerBase
         var query = _context.Addresses
             .Where(a => a.CustomerId == customer.Id && !a.IsDeleted);
 
-        // Filter by Label
-        if (!string.IsNullOrWhiteSpace(label))
+        // Apply Filter
+        if (filter?.ToLower() == "recent")
         {
-            query = query.Where(a => a.Label.ToLower().Contains(label.ToLower()));
+            // Only show addresses that have been used
+            query = query.Where(a => a.LastUsedAt.HasValue);
+            // Default sort for recent is by LastUsedAt
+            query = query.OrderByDescending(a => a.LastUsedAt);
         }
-
-        // Apply Sorting
-        switch (sortBy?.ToLower())
+        else // "saved" or default
         {
-            case "recent": // Sort by LastUsedAt (most recently used first)
-                query = query.OrderByDescending(a => a.LastUsedAt ?? DateTime.MinValue)
-                             .ThenByDescending(a => a.IsDefault);
-                break;
-            case "created": // Sort by CreatedAt
-                query = query.OrderByDescending(a => a.CreatedAt);
-                break;
-            default: // Default: IsDefault first, then by CreatedAt
-                query = query.OrderByDescending(a => a.IsDefault)
-                             .ThenByDescending(a => a.CreatedAt);
-                break;
+            // Apply Sorting for Saved list
+            switch (sortBy?.ToLower())
+            {
+                case "recent":
+                     query = query.OrderByDescending(a => a.LastUsedAt ?? DateTime.MinValue);
+                     break;
+                case "created":
+                    query = query.OrderByDescending(a => a.CreatedAt);
+                    break;
+                default:
+                    query = query.OrderByDescending(a => a.IsDefault)
+                                 .ThenByDescending(a => a.CreatedAt);
+                    break;
+            }
         }
 
         var addresses = await query
