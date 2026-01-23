@@ -36,6 +36,16 @@ public class DriversController : ControllerBase
         var driver = await GetCurrentDriverAsync();
         if (driver == null) return NotFound("Driver profile not found.");
 
+        var yearsActive = (int)((DateTime.UtcNow - driver.CreatedAt).TotalDays / 365);
+        if (yearsActive < 1) yearsActive = 1; // Minimum 1 year for display or handle as 0
+
+        // Completion rate estimation
+        var totalOrders = driver.TotalDeliveries;
+        var cancelledOrders = await _context.Orders.CountAsync(o => o.DriverId == driver.Id && o.Status == 6);
+        var completionRate = totalOrders + cancelledOrders > 0 
+            ? (int)((double)totalOrders / (totalOrders + cancelledOrders) * 100) 
+            : 100;
+
         return new DriverProfileDto
         {
             Id = driver.Id,
@@ -43,12 +53,17 @@ public class DriversController : ControllerBase
             PhoneNumber = driver.User.PhoneNumber,
             AvatarUrl = driver.User.AvatarUrl,
             VehicleType = driver.VehicleType,
-            LicensePlate = driver.LicensePlate,
+            VehicleBrand = driver.VehicleBrand,
+            VehiclePlate = driver.VehiclePlate,
             IsOnline = driver.IsOnline,
             IsVerified = driver.IsVerified,
             WalletBalance = driver.WalletBalance,
             Rating = driver.Rating,
-            TotalDeliveries = driver.TotalDeliveries
+            CompletionRate = completionRate,
+            YearsActive = yearsActive,
+            TotalDeliveries = driver.TotalDeliveries,
+            IdentityNumber = driver.IdentityNumber,
+            DriverLicenseNumber = driver.DriverLicenseNumber
         };
     }
 
@@ -239,35 +254,111 @@ public class DriversController : ControllerBase
         return Ok(new { message = "Order status updated" });
     }
 
-    // GET: api/drivers/wallet
-    [HttpGet("wallet")]
-    public async Task<ActionResult<DriverWalletDto>> GetWallet()
+    // GET: api/drivers/income/summary?period=month
+    [HttpGet("income/summary")]
+    public async Task<ActionResult<DriverIncomeSummaryDto>> GetIncomeSummary([FromQuery] string period = "month")
     {
         var driver = await GetCurrentDriverAsync();
         if (driver == null) return NotFound("Driver profile not found.");
 
-        var today = DateTime.UtcNow.Date;
-        var weekStart = today.AddDays(-(int)today.DayOfWeek);
+        var now = DateTime.UtcNow;
+        DateTime startDate;
+        string label;
+
+        if (period.ToLower() == "week")
+        {
+            startDate = now.AddDays(-(int)now.DayOfWeek);
+            label = "Tuần này";
+        }
+        else if (period.ToLower() == "year")
+        {
+            startDate = new DateTime(now.Year, 1, 1);
+            label = $"Năm {now.Year}";
+        }
+        else // month
+        {
+            startDate = new DateTime(now.Year, now.Month, 1);
+            label = $"Tháng {now.Month}, {now.Year}";
+        }
+
+        var earnings = await _context.DriverEarnings
+            .Where(e => e.DriverId == driver.Id && e.EarnedAt >= startDate)
+            .ToListAsync();
+
+        var totalIncome = earnings.Sum(e => e.Amount);
+        var orderCount = await _context.Orders.CountAsync(o => o.DriverId == driver.Id && o.Status == 5 && o.DeliveredAt >= startDate);
+        var totalDistance = await _context.Orders.Where(o => o.DriverId == driver.Id && o.Status == 5 && o.DeliveredAt >= startDate).SumAsync(o => o.Distance);
+
+        // Mock chart data
+        var chartData = new List<IncomeChartPointDto>();
+        for (int i = 1; i <= 4; i++)
+        {
+            decimal mockValue = totalIncome * (0.1m + (i * 0.05m));
+            chartData.Add(new IncomeChartPointDto { Label = $"Tuần {i}", Value = mockValue });
+        }
+
+        return new DriverIncomeSummaryDto
+        {
+            PeriodLabel = label,
+            TotalIncome = totalIncome,
+            GrowthPercentage = 12.5, // Mock
+            CompletedOrders = orderCount,
+            TotalDistanceKm = totalDistance,
+            MonthlyBonus = 500000, // Mock
+            ChartData = chartData
+        };
+    }
+
+    // GET: api/drivers/income/history
+    [HttpGet("income/history")]
+    public async Task<ActionResult<IEnumerable<DriverIncomeHistoryGroupDto>>> GetIncomeHistory()
+    {
+        var driver = await GetCurrentDriverAsync();
+        if (driver == null) return NotFound("Driver profile not found.");
 
         var earnings = await _context.DriverEarnings
             .Include(e => e.Order)
+                .ThenInclude(o => o!.Restaurant)
             .Where(e => e.DriverId == driver.Id)
-            .OrderByDescending(e => e.CreatedAt)
-            .Take(20)
+            .OrderByDescending(e => e.EarnedAt)
+            .Take(50)
             .ToListAsync();
 
-        return new DriverWalletDto
-        {
-            Balance = driver.WalletBalance,
-            TodayEarnings = earnings.Where(e => e.CreatedAt.Date == today).Sum(e => e.Amount),
-            WeekEarnings = earnings.Where(e => e.CreatedAt.Date >= weekStart).Sum(e => e.Amount),
-            RecentEarnings = earnings.Select(e => new DriverEarningDto
+        var groups = earnings.GroupBy(e => e.EarnedAt.Date)
+            .Select(g => new DriverIncomeHistoryGroupDto
             {
-                OrderId = e.OrderId ?? Guid.Empty,
-                OrderNumber = e.Order?.OrderNumber ?? "N/A",
-                Amount = e.Amount,
-                CreatedAt = e.CreatedAt
-            }).ToList()
+                DateLabel = g.Key == DateTime.UtcNow.Date ? "Hôm nay" : g.Key == DateTime.UtcNow.Date.AddDays(-1) ? "Hôm qua" : g.Key.ToString("dd/MM/yyyy"),
+                DateValue = g.Key.ToString("dd/MM"),
+                OrderCount = g.Count(e => e.OrderId != null),
+                TotalAmount = g.Sum(e => e.Amount),
+                Items = g.Select(e => new DriverIncomeItemDto
+                {
+                    OrderId = e.OrderId ?? Guid.Empty,
+                    OrderNumber = e.Order?.OrderNumber ?? "N/A",
+                    MerchantName = e.Order?.Restaurant?.Name ?? "Hệ thống",
+                    Time = e.EarnedAt.ToLocalTime().ToString("hh:mm tt"),
+                    DistanceKm = e.Order?.Distance ?? 0,
+                    Amount = e.Amount
+                }).ToList()
+            }).ToList();
+
+        return groups;
+    }
+
+    // GET: api/drivers/documents
+    [HttpGet("documents")]
+    public async Task<ActionResult<IEnumerable<DriverDocumentDto>>> GetDocuments()
+    {
+        var driver = await GetCurrentDriverAsync();
+        if (driver == null) return NotFound("Driver profile not found.");
+
+        return new List<DriverDocumentDto>
+        {
+            new DriverDocumentDto { Type = "CI", Name = "Căn cước công dân", Status = "Approved", ExpiryDate = new DateTime(2030, 10, 20), DocumentUrl = driver.IdCardFrontUrl },
+            new DriverDocumentDto { Type = "DL", Name = "Bằng lái xe (B2)", Status = "Approved", ExpiryDate = driver.LicenseExpiryDate, DocumentUrl = driver.DriverLicenseUrl },
+            new DriverDocumentDto { Type = "CriminalRecord", Name = "Lý lịch tư pháp", Status = "Pending", DocumentUrl = driver.CriminalRecordUrl },
+            new DriverDocumentDto { Type = "Insurance", Name = "Bảo hiểm xe", Status = driver.InsuranceExpiryDate < DateTime.UtcNow ? "Expired" : "Approved", ExpiryDate = driver.InsuranceExpiryDate, DocumentUrl = driver.InsuranceUrl },
+            new DriverDocumentDto { Type = "Registration", Name = "Giấy đăng ký xe", Status = "Approved", ExpiryDate = driver.RegistrationExpiryDate, DocumentUrl = driver.VehicleRegistrationUrl }
         };
     }
 
@@ -299,5 +390,46 @@ public class DriversController : ControllerBase
             ItemCount = o.OrderItems.Count,
             CreatedAt = o.CreatedAt
         }).ToList();
+    }
+
+    // GET: api/drivers/wallet
+    [HttpGet("wallet")]
+    public async Task<ActionResult<DriverWalletDto>> GetWallet()
+    {
+        var driver = await GetCurrentDriverAsync();
+        if (driver == null) return NotFound("Driver profile not found.");
+
+        var now = DateTime.UtcNow;
+        var today = now.Date;
+        var startOfWeek = now.AddDays(-(int)now.DayOfWeek).Date;
+        var startOfMonth = new DateTime(now.Year, now.Month, 1);
+
+        var earnings = await _context.DriverEarnings
+            .Where(e => e.DriverId == driver.Id && !e.IsDeleted)
+            .OrderByDescending(e => e.CreatedAt)
+            .ToListAsync();
+
+        var todayEarnings = earnings.Where(e => e.EarnedAt.Date == today).Sum(e => e.Amount);
+        var weekEarnings = earnings.Where(e => e.EarnedAt.Date >= startOfWeek).Sum(e => e.Amount);
+        var monthEarnings = earnings.Where(e => e.EarnedAt.Date >= startOfMonth).Sum(e => e.Amount);
+
+        var transactions = earnings.Take(50).Select(e => new DriverTransactionDto
+        {
+            Id = e.Id,
+            Type = "earning", // Standard for now
+            Amount = e.Amount,
+            Description = e.Description ?? $"Earnings from Order #{e.OrderId}",
+            CreatedAt = e.CreatedAt
+        }).ToList();
+
+        return new DriverWalletDto
+        {
+            Balance = driver.WalletBalance,
+            TodayEarnings = todayEarnings,
+            WeekEarnings = weekEarnings,
+            MonthEarnings = monthEarnings,
+            PendingWithdrawal = 0, // Not implemented yet
+            Transactions = transactions
+        };
     }
 }

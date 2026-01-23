@@ -620,6 +620,61 @@ public static class DbSeeder
 
                     await context.SaveChangesAsync();
                 }
+
+                // ---------------------------------------------------------
+                // 6.1 Seed Driver Earnings (New)
+                // ---------------------------------------------------------
+                var driver = await context.Drivers.FirstOrDefaultAsync(d => d.UserId == driverUser.Id);
+                if (driver != null)
+                {
+                    var earnings = new List<DriverEarning>();
+                    var random = new Random();
+                    decimal totalEarnings = 0;
+
+                    // Generate last 30 days of earnings
+                    for (int i = 0; i < 30; i++)
+                    {
+                        var date = now.AddDays(-i);
+                        int dailyOrders = random.Next(3, 8); // 3-8 orders/day
+
+                        for (int j = 0; j < dailyOrders; j++)
+                        {
+                            decimal amount = 15000 + (random.Next(1, 5) * 5000); // 15k to 35k
+                            earnings.Add(new DriverEarning
+                            {
+                                Id = Guid.NewGuid(),
+                                DriverId = driver.Id,
+                                Amount = amount,
+                                Type = 1, // Order Income
+                                EarnedAt = date.AddHours(random.Next(8, 22)), // 8 AM - 10 PM
+                                CreatedAt = date,
+                                Description = $"Thu nhập từ đơn hàng #DH-{random.Next(1000, 9999)}"
+                            });
+                            totalEarnings += amount;
+                        }
+                    }
+
+                    // Add some bonuses
+                    earnings.Add(new DriverEarning
+                    {
+                        Id = Guid.NewGuid(),
+                        DriverId = driver.Id,
+                        Amount = 500000,
+                        Type = 2, // Bonus
+                        EarnedAt = now.AddDays(-1),
+                        CreatedAt = now.AddDays(-1),
+                        Description = "Thưởng hoàn thành mốc tuần"
+                    });
+                    totalEarnings += 500000;
+
+                    await context.DriverEarnings.AddRangeAsync(earnings);
+                    
+                    driver.WalletBalance = totalEarnings;
+                    driver.TotalDeliveries = earnings.Count(e => e.Type == 1);
+                    
+                    await context.SaveChangesAsync();
+                    Log($"Seeded {earnings.Count} driver earning records. Balance: {totalEarnings}");
+                }
             }
             
             // ---------------------------------------------------------

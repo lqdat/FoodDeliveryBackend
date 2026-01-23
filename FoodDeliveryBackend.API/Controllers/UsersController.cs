@@ -33,12 +33,12 @@ public class UsersController : ControllerBase
         var userId = GetUserId();
         var user = await _context.Users
             .Include(u => u.Customer)
-                .ThenInclude(c => c.Addresses)
+                .ThenInclude(c => c!.Addresses)
             .Include(u => u.Customer)
-                .ThenInclude(c => c.Orders)
+                .ThenInclude(c => c!.Orders)
             .Include(u => u.Driver)
             .Include(u => u.Merchant)
-                .ThenInclude(m => m.Restaurants)
+                .ThenInclude(m => m!.Restaurants)
             .FirstOrDefaultAsync(u => u.Id == userId);
 
         if (user == null) return NotFound("User not found.");

@@ -41,6 +41,20 @@ public partial class Driver
 
     public DateTime? ApprovedAt { get; set; }
 
+    public string? IdentityNumber { get; set; }
+
+    public string? DriverLicenseNumber { get; set; }
+
+    public DateTime? LicenseExpiryDate { get; set; }
+
+    public string? InsuranceUrl { get; set; }
+
+    public DateTime? InsuranceExpiryDate { get; set; }
+
+    public string? CriminalRecordUrl { get; set; }
+
+    public DateTime? RegistrationExpiryDate { get; set; }
+
     public string? DriverLicenseUrl { get; set; }
 
     public string? IdCardBackUrl { get; set; }
