@@ -8,3 +8,13 @@
 1/23/2026 2:50:14 PM: Seeded sample Notifications.
 1/23/2026 2:50:16 PM: Seeded sample Chat Messages.
 1/23/2026 2:50:16 PM: Seed completed successfully!
+1/24/2026 1:54:10 AM: Starting Data Seeding...
+1/24/2026 1:54:10 AM: CLEANING DATABASE FOR RESET...
+1/24/2026 1:54:16 AM: Database cleared.
+1/24/2026 1:54:21 AM: Seeded/Updated 8 categories with Icons and Colors.
+1/24/2026 1:54:25 AM: Seeded/Updated all 5 target restaurants and their complete menus.
+1/24/2026 1:54:28 AM: Seeded 145 driver earning records. Balance: 4445000
+1/24/2026 1:54:29 AM: Seeded sample Vouchers.
+1/24/2026 1:54:29 AM: Seeded sample Notifications.
+1/24/2026 1:54:30 AM: Seeded sample Chat Messages.
+1/24/2026 1:54:30 AM: Seed completed successfully!

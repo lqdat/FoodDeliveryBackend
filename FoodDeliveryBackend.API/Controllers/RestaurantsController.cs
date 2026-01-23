@@ -40,7 +40,11 @@ public class RestaurantsController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<RestaurantDetailDto>> GetRestaurant(Guid id)
+    public async Task<ActionResult<RestaurantDetailDto>> GetRestaurant(
+        Guid id, 
+        [FromQuery] string? section, // e.g. "Món Chính"
+        [FromQuery] bool? isPopular // e.g. true
+    )
     {
         var restaurant = await _context.Restaurants
             .Include(r => r.MenuCategories)
@@ -56,28 +60,52 @@ public class RestaurantsController : ControllerBase
         var sections = new List<MenuSectionDto>();
 
         // 1. "Dành cho bạn" / "Món Nổi Bật" Section (Popular items)
-        var popularItems = restaurant.MenuCategories
-            .SelectMany(mc => mc.MenuItems)
-            .Where(m => m.IsPopular && !m.IsDeleted && m.IsAvailable)
-            .Take(5)
-            .Select(MapToMenuItemDto)
-            .ToList();
+        // If filtering by specific section other than "Món Nổi Bật", skip this unless requested
+        bool showPopular = (string.IsNullOrEmpty(section) || section.Equals("Món Nổi Bật", StringComparison.OrdinalIgnoreCase)) 
+                           && (isPopular == null || isPopular == true);
 
-        if (popularItems.Any())
+        if (showPopular)
         {
-            sections.Add(new MenuSectionDto
+            var popularItems = restaurant.MenuCategories
+                .SelectMany(mc => mc.MenuItems)
+                .Where(m => m.IsPopular && !m.IsDeleted && m.IsAvailable)
+                .Take(5)
+                .Select(MapToMenuItemDto)
+                .ToList();
+
+            if (popularItems.Any())
             {
-                Id = Guid.NewGuid(),
-                Name = "Món Nổi Bật", // Matches "Dành cho bạn" implicitly or explicit section
-                Items = popularItems
-            });
+                sections.Add(new MenuSectionDto
+                {
+                    Id = Guid.NewGuid(),
+                    Name = "Món Nổi Bật",
+                    Items = popularItems
+                });
+            }
         }
 
         // 2. Regular Categories
-        foreach (var category in restaurant.MenuCategories.OrderBy(c => c.DisplayOrder))
+        // Default: Show all if no filter
+        var categories = restaurant.MenuCategories.AsQueryable();
+
+        if (!string.IsNullOrEmpty(section) && !section.Equals("Món Nổi Bật", StringComparison.OrdinalIgnoreCase))
         {
-            var items = category.MenuItems
-                .Where(m => !m.IsDeleted && m.IsAvailable)
+            categories = categories.Where(c => c.Name.ToLower() == section.ToLower());
+        }
+
+        foreach (var category in categories.OrderBy(c => c.DisplayOrder))
+        {
+             // If filtering by popular items only within categories is weird, usually 'isPopular' means just the "Featured" section.
+             // But let's respect the flag if passed explicitly.
+             var itemsQuery = category.MenuItems
+                .Where(m => !m.IsDeleted && m.IsAvailable);
+
+             if (isPopular == true) 
+             {
+                 itemsQuery = itemsQuery.Where(m => m.IsPopular);
+             }
+
+            var items = itemsQuery
                 .OrderBy(m => m.DisplayOrder)
                 .Select(MapToMenuItemDto)
                 .ToList();

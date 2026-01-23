@@ -302,113 +302,33 @@ public static class DbSeeder
                 var targetRestaurants = new List<dynamic>
                 {
                     new { 
+                        Name = "Nhà Hàng Xanh", 
+                        Category = "Healthy", 
+                        ImageUrl = "https://images.unsplash.com/photo-1540189549336-e6e99c3679fe",
+                        CoverImageUrl = "https://images.unsplash.com/photo-1555396273-367ea4eb4db5",
+                        Address = "123 Street",
+                        Rating = 4.8, RatingCount = 200, DeliveryTime = 20, DeliveryFee = 15000m, MinPrice = 40000m, Distance = 2.5,
+                        Tags = new[] { "Vietnam", "Healthy", "Đồ uống" },
+                        MenuItems = new List<dynamic> {
+                            new { Name = "Phở Bò Đặc Biệt", Price = 65000m, OriginalPrice = 75000m, IsPopular = true, Category = "Món Chính", Desc = "Nước dùng hầm xương 24h, thịt bò tái lăn." },
+                            new { Name = "Cơm Tấm Sườn Bì", Price = 55000m, OriginalPrice = (decimal?)null, IsPopular = true, Category = "Món Chính", Desc = "Sườn nướng mật ong than hoa, bì thính." },
+                            new { Name = "Gỏi Cuốn Tôm Thịt", Price = 38000m, OriginalPrice = 45000m, IsPopular = true, Category = "Món Khai Vị", Desc = "Tôm thịt tươi ngon, chấm mắm nêm." },
+                            new { Name = "Trà Đào Cam Sả", Price = 35000m, OriginalPrice = (decimal?)null, IsPopular = false, Category = "Đồ Uống", Desc = "Trà đào tươi mát lạnh." },
+                            new { Name = "Bún Chả Hà Nội", Price = 60000m, OriginalPrice = (decimal?)null, IsPopular = false, Category = "Món Chính", Desc = "Chả nướng than hoa đậm vị." }
+                        }
+                    },
+                    new { 
                         Name = "Cơm Tấm Sài Gòn", 
                         Category = "Cơm", 
                         ImageUrl = "https://images.unsplash.com/photo-1590301157890-4810ed352733",
+                        CoverImageUrl = "https://images.unsplash.com/photo-1504674900247-0877df9cc836",
                         Address = "123 Nguyễn Văn Cừ, Q.5",
                         Rating = 4.8, RatingCount = 1200, DeliveryTime = 20, DeliveryFee = 15000m, MinPrice = 35000m, Distance = 2.5,
                         Tags = new[] { "Cơm Tấm", "Sườn Nướng", "Ăn Trưa" },
                         MenuItems = new List<dynamic> {
-                            new { Name = "Cơm Sườn", Price = 45000m, Category = "Món Chính", Desc = "Cơm sườn nướng than hồng" },
-                            new { Name = "Cơm Bì Chả", Price = 40000m, Category = "Món Chính", Desc = "Cơm bì chả truyền thống" },
-                            new { Name = "Cơm Gà Xối Mỡ", Price = 42000m, Category = "Món Chính", Desc = "Gà chiên giòn rụm" },
-                            new { Name = "Cơm Ba Rọi Nướng", Price = 48000m, Category = "Món Chính", Desc = "Ba rọi nướng đậm đà" },
-                            new { Name = "Cơm Sườn Non Kho", Price = 50000m, Category = "Món Chính", Desc = "Sườn non kho tộ" },
-                            new { Name = "Canh Khổ Qua", Price = 15000m, Category = "Món Phụ", Desc = "Canh khổ qua nhồi thịt" },
-                            new { Name = "Trứng Ốp La", Price = 5000m, Category = "Món Phụ", Desc = "Trứng gà ta" },
-                            new { Name = "Lạp Xưởng", Price = 10000m, Category = "Món Phụ", Desc = "1 cây lạp xưởng tươi" },
-                            new { Name = "Canh Rong Biển", Price = 12000m, Category = "Món Phụ", Desc = "Canh rong biển thịt bằm" },
-                            new { Name = "Trà Đá", Price = 2000m, Category = "Đồ Uống", Desc = "Mát lạnh" },
-                            new { Name = "Nước Sâm", Price = 10000m, Category = "Đồ Uống", Desc = "Sâm lạnh nhà nấu" }
-                        }
-                    },
-                    new { 
-                        Name = "KFC - Gà Rán", 
-                        Category = "Ăn Vặt", 
-                        ImageUrl = "https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec",
-                        Address = "Lotte Mart, Q.7",
-                        Rating = 4.6, RatingCount = 2000, DeliveryTime = 30, DeliveryFee = 20000m, MinPrice = 40000m, Distance = 5.0,
-                        Tags = new[] { "Gà Rán", "KFC", "Fast Food" },
-                        MenuItems = new List<dynamic> {
-                            new { Name = "Combo Gà Rán A", Price = 89000m, Category = "Món Chính", Desc = "2 Gà + 1 Khoai + 1 Pepsi" },
-                            new { Name = "Combo Gà Rán B", Price = 159000m, Category = "Món Chính", Desc = "4 Gà + 2 Khoai + 2 Pepsi" },
-                            new { Name = "Burger Tôm", Price = 45000m, Category = "Món Chính", Desc = "Burger tôm giòn tan" },
-                            new { Name = "Burger Zinger", Price = 59000m, Category = "Món Chính", Desc = "Burger gà cay trứ danh" },
-                            new { Name = "Cơm Gà Quay", Price = 55000m, Category = "Món Chính", Desc = "Cơm gà quay sốt tiêu" },
-                            new { Name = "Mỳ Ý Gà Viên", Price = 45000m, Category = "Món Chính", Desc = "Mỳ ý sốt gà viên" },
-                            new { Name = "Khoai Tây Chiên (Vừa)", Price = 25000m, Category = "Món Phụ", Desc = "Giòn rụm" },
-                            new { Name = "Khoai Tây Chiên (Lớn)", Price = 35000m, Category = "Món Phụ", Desc = "Size lớn chia sẻ" },
-                            new { Name = "Gà Popcorn", Price = 39000m, Category = "Món Phụ", Desc = "Gà viên vui miệng" },
-                            new { Name = "Salad Bắp Cải", Price = 15000m, Category = "Món Phụ", Desc = "Coleslaw tươi mát" },
-                            new { Name = "Khoai Tây Nghiền", Price = 19000m, Category = "Món Phụ", Desc = "Khoai tây nghiền sốt nâu" },
-                            new { Name = "Pepsi Tươi", Price = 15000m, Category = "Đồ Uống", Desc = "Ly vừa" },
-                            new { Name = "7Up", Price = 15000m, Category = "Đồ Uống", Desc = "Ly vừa" }
-                        }
-                    },
-                    new { 
-                        Name = "Koí Thé", 
-                        Category = "Trà Sữa", 
-                        ImageUrl = "https://images.unsplash.com/photo-1558359250-9aa4e09f5fa4",
-                        Address = "Vivo City, Q.7",
-                        Rating = 4.9, RatingCount = 500, DeliveryTime = 15, DeliveryFee = 10000m, MinPrice = 30000m, Distance = 1.0,
-                        Tags = new[] { "Trà Sữa", "Macchiato", "Trân Châu" },
-                        MenuItems = new List<dynamic> {
-                            new { Name = "Hồng Trà Macchiato", Price = 35000m, Category = "Món Chính", Desc = "Size M - Lớp kem béo ngậy" },
-                            new { Name = "Lục Trà Trân Châu", Price = 40000m, Category = "Món Chính", Desc = "Thơm ngon đậm vị" },
-                            new { Name = "Sữa Tươi Trân Châu", Price = 55000m, Category = "Món Chính", Desc = "Đường đen Tiger" },
-                            new { Name = "Oolong Macchiato", Price = 42000m, Category = "Món Chính", Desc = "Trà Oolong đậm đà" },
-                            new { Name = "Trà Xanh Chanh Dây", Price = 45000m, Category = "Món Chính", Desc = "Chua ngọt sảng khoái" },
-                            new { Name = "Matcha Latte", Price = 52000m, Category = "Món Chính", Desc = "Matcha Nhật Bản" },
-                            new { Name = "Trân Châu Hoàng Kim", Price = 10000m, Category = "Món Phụ", Desc = "Dai ngon" },
-                            new { Name = "Thạch Dừa", Price = 8000m, Category = "Món Phụ", Desc = "Giòn giòn" },
-                            new { Name = "Lô Hội", Price = 8000m, Category = "Món Phụ", Desc = "Tươi mát" },
-                            new { Name = "Konjac Jelly", Price = 12000m, Category = "Món Phụ", Desc = "Thạch dẻo" },
-                            new { Name = "Trà Đào", Price = 45000m, Category = "Đồ Uống", Desc = "Có miếng đào tươi" }
-                        }
-                    },
-                    new { 
-                        Name = "Pizza Hut", 
-                        Category = "Ăn Vặt", 
-                        ImageUrl = "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38",
-                        Address = "345 Nguyễn Thị Thập, Q.7",
-                        Rating = 4.5, RatingCount = 850, DeliveryTime = 40, DeliveryFee = 25000m, MinPrice = 100000m, Distance = 3.2,
-                        Tags = new[] { "Pizza", "Mỳ Ý", "Fast Food" },
-                        MenuItems = new List<dynamic> {
-                            new { Name = "Pizza Hải Sản (M)", Price = 159000m, Category = "Món Chính", Desc = "Tôm, mực, thanh cua" },
-                            new { Name = "Pizza Hải Sản (L)", Price = 239000m, Category = "Món Chính", Desc = "Size Lớn" },
-                            new { Name = "Mỳ Ý Bò Bằm", Price = 89000m, Category = "Món Chính", Desc = "Sốt bò bằm cà chua" },
-                            new { Name = "Pizza Pepperoni", Price = 139000m, Category = "Món Chính", Desc = "Xúc xích Ý cay nhẹ" },
-                            new { Name = "Pizza Phô Mai Cao Cấp", Price = 149000m, Category = "Món Chính", Desc = "3 loại phô mai" },
-                            new { Name = "Pizza Rau Củ", Price = 119000m, Category = "Món Chính", Desc = "Dành cho người ăn chay" },
-                            new { Name = "Salad Cá Ngừ", Price = 59000m, Category = "Món Phụ", Desc = "Rau tươi sốt mayo" },
-                            new { Name = "Bánh Mì Bơ Tỏi", Price = 39000m, Category = "Món Phụ", Desc = "Thơm lừng" },
-                            new { Name = "Khoai Tây Cười", Price = 45000m, Category = "Món Phụ", Desc = "Vui nhộn cho bé" },
-                            new { Name = "Mực Chiên Giòn", Price = 79000m, Category = "Món Phụ", Desc = "Mực vòng chiên bột" },
-                            new { Name = "Coca Cola", Price = 20000m, Category = "Đồ Uống", Desc = "Chai 390ml" },
-                            new { Name = "Sprite", Price = 20000m, Category = "Đồ Uống", Desc = "Chai 390ml" }
-                        }
-                    },
-                    new { 
-                        Name = "Highlands Coffee", 
-                        Category = "Trà Sữa", 
-                        ImageUrl = "https://images.unsplash.com/photo-1559496417-e7f25cb247f3",
-                        Address = "Crescent Mall, Q.7",
-                        Rating = 4.7, RatingCount = 1500, DeliveryTime = 25, DeliveryFee = 15000m, MinPrice = 29000m, Distance = 1.5,
-                        Tags = new[] { "Cà Phê", "Trà", "Bánh" },
-                        MenuItems = new List<dynamic> {
-                            new { Name = "Phin Sữa Đá", Price = 29000m, Category = "Món Chính", Desc = "Cà phê phin truyền thống" },
-                            new { Name = "Phin Đen Đá", Price = 29000m, Category = "Món Chính", Desc = "Đậm đà tỉnh táo" },
-                            new { Name = "Trà Sen Vàng", Price = 45000m, Category = "Món Chính", Desc = "Trà sen kem sữa" },
-                            new { Name = "Freeze Trà Xanh", Price = 55000m, Category = "Món Chính", Desc = "Đá xay mát lạnh" },
-                            new { Name = "Trà Thạch Đào", Price = 45000m, Category = "Món Chính", Desc = "Thanh mát giải nhiệt" },
-                            new { Name = "Phindi Hạnh Nhân", Price = 42000m, Category = "Món Chính", Desc = "Hương hạnh nhân thơm béo" },
-                            new { Name = "Bánh Mì Thịt Nướng", Price = 19000m, Category = "Món Phụ", Desc = "Bánh mì Việt Nam" },
-                            new { Name = "Bánh Mì Xíu Mại", Price = 19000m, Category = "Món Phụ", Desc = "Xíu mại sốt cà" },
-                            new { Name = "Mousse Đào", Price = 35000m, Category = "Món Phụ", Desc = "Bánh ngọt tráng miệng" },
-                            new { Name = "Bánh Chuối", Price = 25000m, Category = "Món Phụ", Desc = "Bánh chuối nướng" },
-                            new { Name = "Phô Mai Cà Phê", Price = 29000m, Category = "Món Phụ", Desc = "Bánh phô mai vị cafe" },
-                            new { Name = "Bạc Xỉu", Price = 29000m, Category = "Đồ Uống", Desc = "Nhiều sữa ít cafe" },
-                            new { Name = "Sữa Tươi", Price = 25000m, Category = "Đồ Uống", Desc = "Sữa tươi Vinamilk" }
+                            new { Name = "Cơm Sườn", Price = 45000m, OriginalPrice = 50000m, IsPopular = true, Category = "Món Chính", Desc = "Cơm sườn nướng than hồng" },
+                            new { Name = "Cơm Bì Chả", Price = 40000m, OriginalPrice = (decimal?)null, IsPopular = false, Category = "Món Chính", Desc = "Cơm bì chả truyền thống" },
+                            new { Name = "Trà Đá", Price = 2000m, OriginalPrice = (decimal?)null, IsPopular = false, Category = "Đồ Uống", Desc = "Mát lạnh" }
                         }
                     }
                 };
@@ -455,7 +375,7 @@ public static class DbSeeder
                     if (restName == "Cơm Tấm Sài Gòn") comTamRest = rest;
 
                     // 2. Ensure Menu Categories
-                    var catNames = new[] { "Món Chính", "Món Phụ", "Đồ Uống" };
+                    var catNames = new[] { "Món Nổi Bật", "Món Chính", "Món Khai Vị", "Món Phụ", "Đồ Uống" };
                     foreach (var cn in catNames)
                     {
                         if (!rest.MenuCategories.Any(c => c.Name == cn))
@@ -493,7 +413,9 @@ public static class DbSeeder
                                 {
                                     Id = Guid.NewGuid(),
                                     MenuCategoryId = targetCat.Id,
-                                    Name = itemName
+                                    Name = itemName,
+                                    IsAvailable = true,
+                                    DisplayOrder = 0
                                 };
                                 context.MenuItems.Add(item);
                             }
@@ -501,6 +423,24 @@ public static class DbSeeder
                             item.Price = (decimal)itemData.Price;
                             item.Description = (string)itemData.Desc;
                             item.ImageUrl = "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38"; // Placeholder
+                            
+                            // Enhanced Fields
+                            // Use reflection or dynamic property checking safely if needed, 
+                            // but since we define the anonymouse objects below/above, we know they exist.
+                            // However, C# dynamic binding might fail if property is missing.
+                            // Safest way involves checking or ensuring all anonymous objects have these fields.
+                            // I will ensure all objects in the list have these fields in the previous definition step.
+                            
+                            // Check if property exists roughly or just rely on consistent seeding structure I will define.
+                            // Actually, I can just use TryGet or similar if it was a dictionary, but it's dynamic.
+                            // I will assume properties exist because I am updating the source list right now in this same file.
+                            // Wait, I am editing lines 481-506, but the list definition is above.
+                            // I MUST update the list definition first or simultaneously. 
+                            // Since replace_file_content works on chunks, I should do the List definition update first, then this logic.
+                            // Actually, I can do a MULTI replace.
+                     
+                            try { item.OriginalPrice = (decimal?)itemData.OriginalPrice; } catch { item.OriginalPrice = null; }
+                            try { item.IsPopular = (bool)itemData.IsPopular; } catch { item.IsPopular = false; }
                         }
                     }
                     await context.SaveChangesAsync();
