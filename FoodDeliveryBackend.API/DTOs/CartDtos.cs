@@ -18,6 +18,8 @@ public class CartResponse
     public List<CartItemResponse> Items { get; set; } = new();
     public decimal TotalAmount { get; set; }
     public int TotalItems { get; set; }
+    public decimal DeliveryFee { get; set; }
+    public decimal DiscountAmount { get; set; }
 }
 
 public class CartItemResponse

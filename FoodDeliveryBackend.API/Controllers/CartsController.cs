@@ -55,7 +55,9 @@ public class CartsController : ControllerBase
                 Notes = ci.Notes
             }).ToList(),
             TotalAmount = c.CartItems.Where(ci => !ci.IsDeleted).Sum(ci => ci.Quantity * ci.UnitPrice),
-            TotalItems = c.CartItems.Where(ci => !ci.IsDeleted).Sum(ci => ci.Quantity)
+            TotalItems = c.CartItems.Where(ci => !ci.IsDeleted).Sum(ci => ci.Quantity),
+            DeliveryFee = c.Restaurant.DeliveryFee,
+            DiscountAmount = 0 // Placeholder
         }).ToList();
 
         return Ok(response);
