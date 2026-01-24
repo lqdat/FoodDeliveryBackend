@@ -35,3 +35,24 @@ public class MenuItemDetailDto
     public bool IsPopular { get; set; } // "BÁN CHẠY" badge
     public string? DiscountBadge { get; set; } // "-15%" badge
 }
+
+public class RestaurantSummaryDto
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; } = null!;
+    public string ImageUrl { get; set; } = null!;
+    public string CoverUrl { get; set; } = null!;
+    public double Rating { get; set; }
+    public double Distance { get; set; }
+    public int DeliveryTime { get; set; }
+    public decimal MinPrice { get; set; }
+    public bool IsTrending { get; set; }
+}
+
+public class CategoryWithRestaurantsDto
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; } = null!;
+    public string Code { get; set; } = null!;
+    public List<RestaurantSummaryDto> Restaurants { get; set; } = new();
+}
