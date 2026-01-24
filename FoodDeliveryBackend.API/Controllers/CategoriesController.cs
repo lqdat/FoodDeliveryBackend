@@ -20,6 +20,8 @@ public class CategoriesController : ControllerBase
         _context = context;
     }
 
+
+
     [HttpGet]
     public async Task<ActionResult<IEnumerable<FoodCategory>>> GetCategories()
     {
@@ -27,19 +29,6 @@ public class CategoriesController : ControllerBase
             .Where(c => !c.IsDeleted && c.IsActive)
             .OrderBy(c => c.DisplayOrder)
             .ToListAsync();
-    }
-
-    [HttpGet("{id}")]
-    public async Task<ActionResult<FoodCategory>> GetCategory(Guid id)
-    {
-        var category = await _context.FoodCategories.FirstOrDefaultAsync(c => c.Id == id && !c.IsDeleted && c.IsActive);
-        
-        if (category == null)
-        {
-            return NotFound();
-        }
-        
-        return category;
     }
 
     [HttpGet("code/{code}/restaurants")]
