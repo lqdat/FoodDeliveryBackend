@@ -9,6 +9,8 @@ public partial class FoodCategory
 
     public string Name { get; set; } = null!;
 
+    public string Code { get; set; } = null!; // Unique code for category
+
     public string? NameSecondary { get; set; }
 
     public string? IconUrl { get; set; }

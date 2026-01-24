@@ -112,15 +112,24 @@ public class FoodDeliveryDbContext : DbContext
         {
             entity.HasIndex(e => e.RestaurantId, "IX_MenuCategories_RestaurantId");
             entity.Property(e => e.Id).ValueGeneratedNever();
-            entity.HasOne(d => d.Restaurant).WithMany(p => p.MenuCategories).HasForeignKey(d => d.RestaurantId);
+            entity.HasOne(d => d.Restaurant)
+                  .WithMany(p => p.MenuCategories)
+                  .HasForeignKey(d => d.RestaurantId)
+                  .OnDelete(DeleteBehavior.Cascade); // Enforce Cascade Delete
         });
 
         modelBuilder.Entity<MenuItem>(entity =>
         {
             entity.HasIndex(e => e.MenuCategoryId, "IX_MenuItems_MenuCategoryId");
+            // Compound Index for performance
+            entity.HasIndex(e => new { e.MenuCategoryId, e.IsAvailable }, "IX_MenuItems_Category_Available");
+            
             entity.Property(e => e.Id).ValueGeneratedNever();
             entity.Property(e => e.Price).HasPrecision(18, 2);
-            entity.HasOne(d => d.MenuCategory).WithMany(p => p.MenuItems).HasForeignKey(d => d.MenuCategoryId);
+            entity.HasOne(d => d.MenuCategory)
+                  .WithMany(p => p.MenuItems)
+                  .HasForeignKey(d => d.MenuCategoryId)
+                  .OnDelete(DeleteBehavior.Cascade); // Enforce Cascade Delete
         });
 
         modelBuilder.Entity<Merchant>(entity =>

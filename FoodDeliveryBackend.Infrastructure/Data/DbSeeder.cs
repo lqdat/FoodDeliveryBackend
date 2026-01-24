@@ -106,6 +106,7 @@ public static class DbSeeder
             {
                 customerUser.PasswordHash = "customer";
             }
+            if (customerUser == null) throw new Exception("Failed to seed Customer user.");
             
             // Ensure Customer Profile
             if (!await context.Customers.AnyAsync(c => c.UserId == customerUser.Id))
@@ -216,58 +217,58 @@ public static class DbSeeder
                 new FoodCategory { 
                     Id = Guid.NewGuid(), 
                     Name = "Cơm", 
+                    Code = "COM",
                     IconUrl = "https://cdn-icons-png.flaticon.com/512/1531/1531338.png", 
-                    BackgroundColor = "#FFF5E6", // Light Orange
+                    BackgroundColor = "#FFF5E6", 
                     ImageUrl = "https://images.unsplash.com/photo-1512058564366-18510be2db19" 
                 },
                 new FoodCategory { 
                     Id = Guid.NewGuid(), 
                     Name = "Bún/Phở", 
+                    Code = "BUN_PHO",
                     IconUrl = "https://cdn-icons-png.flaticon.com/512/3421/3421683.png", 
-                    BackgroundColor = "#E6F7FF", // Light Blue
+                    BackgroundColor = "#E6F7FF", 
                     ImageUrl = "https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43" 
                 },
                 new FoodCategory { 
                     Id = Guid.NewGuid(), 
                     Name = "Trà Sữa", 
+                    Code = "TRA_SUA",
                     IconUrl = "https://cdn-icons-png.flaticon.com/512/3081/3081162.png", 
-                    BackgroundColor = "#FFF0F6", // Light Pink
+                    BackgroundColor = "#FFF0F6", 
                     ImageUrl = "https://images.unsplash.com/photo-1556679343-c7306c1976bc" 
                 },
                 new FoodCategory { 
                     Id = Guid.NewGuid(), 
-                    Name = "Ăn Vặt", 
+                    Name = "Gà Rán", // Thức ăn nhanh
+                    Code = "FAST_FOOD",
                     IconUrl = "https://cdn-icons-png.flaticon.com/512/737/737967.png", 
-                    BackgroundColor = "#FFFFE6", // Light Yellow
+                    BackgroundColor = "#FFFFE6",
                     ImageUrl = "https://images.unsplash.com/photo-1561758033-d89a9ad46330" 
                 },
                 new FoodCategory { 
                     Id = Guid.NewGuid(), 
+                    Name = "Cà Phê", 
+                    Code = "COFFEE",
+                    IconUrl = "https://cdn-icons-png.flaticon.com/512/2935/2935413.png", 
+                    BackgroundColor = "#F4E3D7", 
+                    ImageUrl = "https://images.unsplash.com/photo-1497935586351-b67a49e012bf" 
+                },
+                new FoodCategory { 
+                    Id = Guid.NewGuid(), 
                     Name = "Healthy", 
+                    Code = "HEALTHY",
                     IconUrl = "https://cdn-icons-png.flaticon.com/512/2913/2913456.png", 
-                    BackgroundColor = "#E6FFFA", // Light Green
+                    BackgroundColor = "#E6FFFA", 
                     ImageUrl = "https://images.unsplash.com/photo-1512621776951-a57141f2eefd" 
                 },
-                new FoodCategory { 
+                 new FoodCategory { 
                     Id = Guid.NewGuid(), 
-                    Name = "Deal Hời", 
-                    IconUrl = "https://cdn-icons-png.flaticon.com/512/726/726496.png", 
-                    BackgroundColor = "#FFF1F0", // Light Red
-                    ImageUrl = "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da" 
-                },
-                new FoodCategory { 
-                    Id = Guid.NewGuid(), 
-                    Name = "Đi Chợ", 
-                    IconUrl = "https://cdn-icons-png.flaticon.com/512/1261/1261163.png", 
-                    BackgroundColor = "#F9F0FF", // Light Purple
-                    ImageUrl = "https://images.unsplash.com/photo-1542838132-92c53300491e" 
-                },
-                new FoodCategory { 
-                    Id = Guid.NewGuid(), 
-                    Name = "Thêm", 
-                    IconUrl = "https://cdn-icons-png.flaticon.com/512/2948/2948032.png", 
-                    BackgroundColor = "#F5F5F5", // Light Grey
-                    ImageUrl = "https://images.unsplash.com/photo-1516321318423-f06f85e504b3" 
+                    Name = "Đồ Uống", 
+                    Code = "DRINKS",
+                    IconUrl = "https://cdn-icons-png.flaticon.com/512/2405/2405597.png", 
+                    BackgroundColor = "#F9F0FF", 
+                    ImageUrl = "https://images.unsplash.com/photo-1544145945-f90425340c7e" 
                 }
             };
 
@@ -280,174 +281,199 @@ public static class DbSeeder
                 }
                 else
                 {
+                    existing.Code = catDef.Code; // Upsert code
                     existing.IconUrl = catDef.IconUrl;
                     existing.BackgroundColor = catDef.BackgroundColor;
                     existing.ImageUrl = catDef.ImageUrl;
                 }
             }
             await context.SaveChangesAsync();
-            Log($"Seeded/Updated {categoryDefinitions.Count} categories with Icons and Colors.");
+            Log($"Seeded {categoryDefinitions.Count} Global Categories.");
 
 
             // ---------------------------------------------------------
             // 3. Restaurants & Menu Items
             // ---------------------------------------------------------
-            // ---------------------------------------------------------
-            // 3. Restaurants & Menu Items (Consolidated & Robust)
-            // ---------------------------------------------------------
-            if (merchantProfile != null)
+            var cats = await context.FoodCategories.ToListAsync();
+            Restaurant? comTamRest = null;
+
+            var targetRestaurants = new List<dynamic>
             {
-                var cats = await context.FoodCategories.ToListAsync();
-                Restaurant? comTamRest = null;
-                var targetRestaurants = new List<dynamic>
+                new { 
+                    MerchantEmail = "xanh@merchant.com", MerchantName = "Chuỗi Nhà Hàng Xanh",
+                    Name = "Nhà Hàng Xanh", 
+                    Category = "Healthy", 
+                    ImageUrl = "https://images.unsplash.com/photo-1540189549336-e6e99c3679fe",
+                    CoverImageUrl = "https://images.unsplash.com/photo-1555396273-367ea4eb4db5",
+                    Address = "123 Street",
+                    Rating = 4.8, RatingCount = 200, DeliveryTime = 20, DeliveryFee = 15000m, MinPrice = 40000m, Distance = 2.5,
+                    Tags = new[] { "Vietnam", "Healthy", "Đồ uống" },
+                    MenuItems = new List<dynamic> {
+                        new { Name = "Phở Bò Đặc Biệt", Price = 65000m, OriginalPrice = 75000m, IsPopular = true, Category = "Món Chính", Desc = "Nước dùng hầm xương 24h" },
+                        new { Name = "Gỏi Cuốn Tôm Thịt", Price = 38000m, OriginalPrice = 45000m, IsPopular = true, Category = "Khai Vị", Desc = "Tôm thịt tươi ngon" },
+                        new { Name = "Trà Đào Cam Sả", Price = 35000m, OriginalPrice = (decimal?)null, IsPopular = false, Category = "Đồ Uống", Desc = "Trà đào tươi mát" }
+                    }
+                },
+                new { 
+                    MerchantEmail = "comtam@merchant.com", MerchantName = "Cơm Tấm Bà Tám",
+                    Name = "Cơm Tấm Sài Gòn", 
+                    Category = "Cơm", 
+                    ImageUrl = "https://images.unsplash.com/photo-1590301157890-4810ed352733",
+                    CoverImageUrl = "https://images.unsplash.com/photo-1504674900247-0877df9cc836",
+                    Address = "123 Nguyễn Văn Cừ, Q.5",
+                    Rating = 4.8, RatingCount = 1200, DeliveryTime = 20, DeliveryFee = 15000m, MinPrice = 35000m, Distance = 2.5,
+                    Tags = new[] { "Cơm Tấm", "Sườn Nướng", "Ăn Trưa" },
+                    MenuItems = new List<dynamic> {
+                        new { Name = "Cơm Sườn", Price = 45000m, OriginalPrice = 50000m, IsPopular = true, Category = "Cơm Tấm", Desc = "Cơm sườn nướng than hồng" },
+                        new { Name = "Cơm Bì Chả", Price = 40000m, OriginalPrice = (decimal?)null, IsPopular = false, Category = "Cơm Tấm", Desc = "Cơm bì chả truyền thống" },
+                        new { Name = "Canh Khổ Qua", Price = 15000m, OriginalPrice = (decimal?)null, IsPopular = false, Category = "Canh/Súp", Desc = "Canh khổ qua dồn thịt" },
+                        new { Name = "Trà Đá", Price = 2000m, OriginalPrice = (decimal?)null, IsPopular = false, Category = "Giải Khát", Desc = "Mát lạnh" }
+                    }
+                },
+                new { 
+                    MerchantEmail = "kfc@merchant.com", MerchantName = "KFC Vietnam",
+                    Name = "KFC - Gà Rán", 
+                    Category = "Gà Rán", 
+                    ImageUrl = "https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec",
+                    CoverImageUrl = "https://images.unsplash.com/photo-1513639776629-9be61b9a3164",
+                    Address = "Lotte Mart, Q.7",
+                    Rating = 4.6, RatingCount = 2000, DeliveryTime = 30, DeliveryFee = 20000m, MinPrice = 40000m, Distance = 5.0,
+                    Tags = new[] { "Gà Rán", "KFC", "Fast Food" },
+                    MenuItems = new List<dynamic> {
+                        new { Name = "Combo Gà Rán A", Price = 89000m, OriginalPrice = 99000m, IsPopular = true, Category = "Combo Nhóm", Desc = "2 Gà + 1 Khoai + 1 Pepsi" },
+                        new { Name = "Burger Tôm", Price = 45000m, OriginalPrice = (decimal?)null, IsPopular = false, Category = "Burger", Desc = "Burger tôm giòn tan" },
+                         new { Name = "Gà Giòn Cay", Price = 38000m, OriginalPrice = (decimal?)null, IsPopular = true, Category = "Gà Rán", Desc = "Gà rán công thức cay" },
+                        new { Name = "Pepsi Tươi", Price = 15000m, OriginalPrice = (decimal?)null, IsPopular = false, Category = "Thức Uống", Desc = "Ly vừa" }
+                    }
+                },
+                new { 
+                    MerchantEmail = "koi@merchant.com", MerchantName = "Koi The Group",
+                    Name = "Koí Thé", 
+                    Category = "Trà Sữa", 
+                    ImageUrl = "https://images.unsplash.com/photo-1558359250-9aa4e09f5fa4",
+                    CoverImageUrl = "https://images.unsplash.com/photo-1497515114629-f71d768fd61c",
+                    Address = "Vivo City, Q.7",
+                    Rating = 4.9, RatingCount = 500, DeliveryTime = 15, DeliveryFee = 10000m, MinPrice = 30000m, Distance = 1.0,
+                    Tags = new[] { "Trà Sữa", "Macchiato", "Trân Châu" },
+                    MenuItems = new List<dynamic> {
+                        new { Name = "Hồng Trà Macchiato", Price = 35000m, OriginalPrice = (decimal?)null, IsPopular = true, Category = "Macchiato", Desc = "Size M - Lớp kem béo ngậy" },
+                        new { Name = "Lục Trà Sữa", Price = 40000m, OriginalPrice = (decimal?)null, IsPopular = true, Category = "Trà Sữa", Desc = "Trà sữa hương lài" },
+                        new { Name = "Trân Châu Hoàng Kim", Price = 10000m, OriginalPrice = (decimal?)null, IsPopular = false, Category = "Topping", Desc = "Dai ngon" }
+                    }
+                },
+            };
+
+            foreach (var restData in targetRestaurants)
+            {
+                // 1. Merchant Logic
+                string mEmail = restData.MerchantEmail;
+                string mName = restData.MerchantName;
+                
+                var mUser = await context.Users.FirstOrDefaultAsync(u => u.Email == mEmail);
+                if (mUser == null)
                 {
-                    new { 
-                        Name = "Nhà Hàng Xanh", 
-                        Category = "Healthy", 
-                        ImageUrl = "https://images.unsplash.com/photo-1540189549336-e6e99c3679fe",
-                        CoverImageUrl = "https://images.unsplash.com/photo-1555396273-367ea4eb4db5",
-                        Address = "123 Street",
-                        Rating = 4.8, RatingCount = 200, DeliveryTime = 20, DeliveryFee = 15000m, MinPrice = 40000m, Distance = 2.5,
-                        Tags = new[] { "Vietnam", "Healthy", "Đồ uống" },
-                        MenuItems = new List<dynamic> {
-                            new { Name = "Phở Bò Đặc Biệt", Price = 65000m, OriginalPrice = 75000m, IsPopular = true, Category = "Món Chính", Desc = "Nước dùng hầm xương 24h, thịt bò tái lăn." },
-                            new { Name = "Cơm Tấm Sườn Bì", Price = 55000m, OriginalPrice = (decimal?)null, IsPopular = true, Category = "Món Chính", Desc = "Sườn nướng mật ong than hoa, bì thính." },
-                            new { Name = "Gỏi Cuốn Tôm Thịt", Price = 38000m, OriginalPrice = 45000m, IsPopular = true, Category = "Món Khai Vị", Desc = "Tôm thịt tươi ngon, chấm mắm nêm." },
-                            new { Name = "Trà Đào Cam Sả", Price = 35000m, OriginalPrice = (decimal?)null, IsPopular = false, Category = "Đồ Uống", Desc = "Trà đào tươi mát lạnh." },
-                            new { Name = "Bún Chả Hà Nội", Price = 60000m, OriginalPrice = (decimal?)null, IsPopular = false, Category = "Món Chính", Desc = "Chả nướng than hoa đậm vị." }
-                        }
-                    },
-                    new { 
-                        Name = "Cơm Tấm Sài Gòn", 
-                        Category = "Cơm", 
-                        ImageUrl = "https://images.unsplash.com/photo-1590301157890-4810ed352733",
-                        CoverImageUrl = "https://images.unsplash.com/photo-1504674900247-0877df9cc836",
-                        Address = "123 Nguyễn Văn Cừ, Q.5",
-                        Rating = 4.8, RatingCount = 1200, DeliveryTime = 20, DeliveryFee = 15000m, MinPrice = 35000m, Distance = 2.5,
-                        Tags = new[] { "Cơm Tấm", "Sườn Nướng", "Ăn Trưa" },
-                        MenuItems = new List<dynamic> {
-                            new { Name = "Cơm Sườn", Price = 45000m, OriginalPrice = 50000m, IsPopular = true, Category = "Món Chính", Desc = "Cơm sườn nướng than hồng" },
-                            new { Name = "Cơm Bì Chả", Price = 40000m, OriginalPrice = (decimal?)null, IsPopular = false, Category = "Món Chính", Desc = "Cơm bì chả truyền thống" },
-                            new { Name = "Trà Đá", Price = 2000m, OriginalPrice = (decimal?)null, IsPopular = false, Category = "Đồ Uống", Desc = "Mát lạnh" }
-                        }
-                    }
-                };
-
-                foreach (var restData in targetRestaurants)
+                    mUser = new User
+                    {
+                        Id = Guid.NewGuid(),
+                        FullName = mName,
+                        Email = mEmail,
+                        PhoneNumber = "09" + DateTime.UtcNow.Ticks.ToString().Substring(10),
+                        PasswordHash = "merchant",
+                        Role = 3,
+                        IsActive = true,
+                        CreatedAt = now,
+                        UpdatedAt = now
+                    };
+                    context.Users.Add(mUser);
+                }
+                
+                var mProfile = await context.Merchants.FirstOrDefaultAsync(m => m.UserId == mUser.Id);
+                if (mProfile == null)
                 {
-                    string restName = restData.Name;
-                    string restCategory = restData.Category;
+                    mProfile = new Merchant { Id = Guid.NewGuid(), UserId = mUser.Id, BusinessName = mName, ContactEmail = mEmail, ContactPhone = mUser.PhoneNumber, IsActive = true, IsVerified = true, CreatedAt = now };
+                    context.Merchants.Add(mProfile);
+                }
+                
+                // 2. Restaurant
+                string restName = restData.Name;
+                string restCategory = restData.Category;
 
-                    // 1. Upsert Restaurant
-                    var rest = await context.Restaurants
-                                    .Include(r => r.MenuCategories)
-                                    .ThenInclude(mc => mc.MenuItems)
-                                    .FirstOrDefaultAsync(r => r.Name == restName);
+                var rest = await context.Restaurants.Include(r => r.MenuCategories).ThenInclude(mc => mc.MenuItems).FirstOrDefaultAsync(r => r.Name == restName);
 
-                    if (rest == null)
-                    {
-                        rest = new Restaurant
-                        {
-                            Id = Guid.NewGuid(),
-                            MerchantId = merchantProfile.Id,
-                            Name = restName,
-                            CreatedAt = now,
-                            IsApproved = true,
-                            IsOpen = true
-                        };
-                        context.Restaurants.Add(rest);
-                    }
-
-                    // Update fields
-                    rest.MerchantId = merchantProfile.Id; // Ensure ownership
-                    rest.CategoryId = cats.FirstOrDefault(c => c.Name == restCategory)?.Id;
-                    rest.ImageUrl = restData.ImageUrl;
-                    rest.Address = restData.Address;
-                    rest.Rating = (double)restData.Rating;
-                    rest.RatingCount = (int)restData.RatingCount;
-                    rest.DeliveryTime = (int)restData.DeliveryTime;
-                    rest.DeliveryFee = (decimal)restData.DeliveryFee;
-                    rest.MinPrice = (decimal)restData.MinPrice;
-                    rest.Distance = (double)restData.Distance;
-                    rest.Tags = (string[])restData.Tags;
-
-                    await context.SaveChangesAsync();
-                    if (restName == "Cơm Tấm Sài Gòn") comTamRest = rest;
-
-                    // 2. Ensure Menu Categories
-                    var catNames = new[] { "Món Nổi Bật", "Món Chính", "Món Khai Vị", "Món Phụ", "Đồ Uống" };
-                    foreach (var cn in catNames)
-                    {
-                        if (!rest.MenuCategories.Any(c => c.Name == cn))
-                        {
-                            context.MenuCategories.Add(new MenuCategory
-                            {
-                                Id = Guid.NewGuid(),
-                                RestaurantId = rest.Id,
-                                Name = cn,
-                                DisplayOrder = Array.IndexOf(catNames, cn) + 1
-                            });
-                        }
-                    }
-                    await context.SaveChangesAsync();
-                    
-                    // Reload to get new categories
-                    rest = await context.Restaurants
-                                    .Include(r => r.MenuCategories)
-                                    .ThenInclude(mc => mc.MenuItems)
-                                    .FirstOrDefaultAsync(r => r.Id == rest.Id);
-
-                    // 3. Upsert Menu Items
-                    foreach (var itemData in restData.MenuItems)
-                    {
-                        string targetCatName = itemData.Category;
-                        string itemName = itemData.Name;
-
-                        var targetCat = rest.MenuCategories.FirstOrDefault(c => c.Name == targetCatName);
-                        if (targetCat != null)
-                        {
-                            var item = targetCat.MenuItems.FirstOrDefault(i => i.Name == itemName);
-                            if (item == null)
-                            {
-                                item = new MenuItem
-                                {
-                                    Id = Guid.NewGuid(),
-                                    MenuCategoryId = targetCat.Id,
-                                    Name = itemName,
-                                    IsAvailable = true,
-                                    DisplayOrder = 0
-                                };
-                                context.MenuItems.Add(item);
-                            }
-
-                            item.Price = (decimal)itemData.Price;
-                            item.Description = (string)itemData.Desc;
-                            item.ImageUrl = "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38"; // Placeholder
-                            
-                            // Enhanced Fields
-                            // Use reflection or dynamic property checking safely if needed, 
-                            // but since we define the anonymouse objects below/above, we know they exist.
-                            // However, C# dynamic binding might fail if property is missing.
-                            // Safest way involves checking or ensuring all anonymous objects have these fields.
-                            // I will ensure all objects in the list have these fields in the previous definition step.
-                            
-                            // Check if property exists roughly or just rely on consistent seeding structure I will define.
-                            // Actually, I can just use TryGet or similar if it was a dictionary, but it's dynamic.
-                            // I will assume properties exist because I am updating the source list right now in this same file.
-                            // Wait, I am editing lines 481-506, but the list definition is above.
-                            // I MUST update the list definition first or simultaneously. 
-                            // Since replace_file_content works on chunks, I should do the List definition update first, then this logic.
-                            // Actually, I can do a MULTI replace.
-                     
-                            try { item.OriginalPrice = (decimal?)itemData.OriginalPrice; } catch { item.OriginalPrice = null; }
-                            try { item.IsPopular = (bool)itemData.IsPopular; } catch { item.IsPopular = false; }
-                        }
-                    }
-                    await context.SaveChangesAsync();
+                if (rest == null)
+                {
+                    rest = new Restaurant { Id = Guid.NewGuid(), MerchantId = mProfile.Id, Name = restName, CreatedAt = now, IsApproved = true, IsOpen = true, TotalOrders = new Random().Next(50, 500), IsTrending = (double)restData.Rating > 4.7 };
+                    context.Restaurants.Add(rest);
                 }
 
-                Log("Seeded/Updated all 5 target restaurants and their complete menus.");
+                rest.MerchantId = mProfile.Id;
+                rest.CategoryId = cats.FirstOrDefault(c => c.Name == restCategory)?.Id;
+                rest.ImageUrl = restData.ImageUrl;
+                try { rest.CoverImageUrl = restData.CoverImageUrl; } catch {}
+                rest.Address = restData.Address;
+                rest.Rating = (double)restData.Rating;
+                rest.RatingCount = (int)restData.RatingCount;
+                rest.DeliveryTime = (int)restData.DeliveryTime;
+                rest.DeliveryFee = (decimal)restData.DeliveryFee;
+                rest.MinPrice = (decimal)restData.MinPrice;
+                rest.Distance = (double)restData.Distance;
+                rest.Tags = (string[])restData.Tags;
+
+                await context.SaveChangesAsync();
+                if (restName == "Cơm Tấm Sài Gòn") comTamRest = rest;
+
+                // 3. Dynamic Menu Categories from Items
+                // Identify unique categories for this restaurant from the item data
+                var definedCategories = new HashSet<string>();
+                foreach(var item in restData.MenuItems) {
+                    definedCategories.Add((string)item.Category);
+                }
+
+                int sortOrder = 1;
+                foreach (var cn in definedCategories)
+                {
+                    if (!rest.MenuCategories.Any(c => c.Name == cn))
+                    {
+                        context.MenuCategories.Add(new MenuCategory
+                        {
+                            Id = Guid.NewGuid(),
+                            RestaurantId = rest.Id,
+                            Name = cn,
+                            DisplayOrder = sortOrder++
+                        });
+                    }
+                }
+                await context.SaveChangesAsync();
+                
+                rest = await context.Restaurants.Include(r => r.MenuCategories).ThenInclude(mc => mc.MenuItems).FirstOrDefaultAsync(r => r.Id == rest.Id);
+                if (rest == null) continue;
+
+                // 4. Menu Items
+                foreach (var itemData in restData.MenuItems)
+                {
+                    string targetCatName = itemData.Category;
+                    string itemName = itemData.Name;
+
+                    var targetCat = rest.MenuCategories.FirstOrDefault(c => c.Name == targetCatName);
+                    if (targetCat != null)
+                    {
+                        var item = targetCat.MenuItems.FirstOrDefault(i => i.Name == itemName);
+                        if (item == null)
+                        {
+                            item = new MenuItem { Id = Guid.NewGuid(), MenuCategoryId = targetCat.Id, Name = itemName, IsAvailable = true, DisplayOrder = 0 };
+                            context.MenuItems.Add(item);
+                        }
+
+                        item.Price = (decimal)itemData.Price;
+                        item.Description = (string)itemData.Desc;
+                        item.ImageUrl = "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38";
+                        try { item.OriginalPrice = (decimal?)itemData.OriginalPrice; } catch { item.OriginalPrice = null; }
+                        try { item.IsPopular = (bool)itemData.IsPopular; } catch { item.IsPopular = false; }
+                    }
+                }
+                await context.SaveChangesAsync();
             }
+            Log("Seeded/Updated all target restaurants with UNIQUE Merchant Accounts and DYNAMIC Categories.");
 
             // ---------------------------------------------------------
             // 6. Seed Orders (Sample History)
@@ -459,24 +485,28 @@ public static class DbSeeder
                 
                 // Get a restaurant
                 // FIX: Use MenuCategories to access items
-                var comTamRest = await context.Restaurants
+                // Get a restaurant
+                var orderRest = await context.Restaurants
                                     .Include(r => r.MenuCategories)
                                     .ThenInclude(mc => mc.MenuItems)
                                     .FirstOrDefaultAsync(r => r.Name == "Cơm Tấm Sài Gòn");
                                     
-                if (comTamRest != null && comTamRest.MenuCategories.Any())
+                if (orderRest != null && orderRest.MenuCategories.Any())
                 {
                     // FIX: Select from MenuCategories
-                    var menuItem = comTamRest.MenuCategories.SelectMany(mc => mc.MenuItems).FirstOrDefault();
+                    var menuItem = orderRest.MenuCategories.SelectMany(mc => mc.MenuItems).FirstOrDefault();
                     if (menuItem != null)
                     {
                         // Order 1: Completed
+                        var customer = await context.Customers.FirstOrDefaultAsync(c => c.UserId == customerUser.Id);
+                        if (customer == null) return; // FIX: Use return instead of continue
+
                         var order1 = new Order
                         {
                             Id = Guid.NewGuid(),
                             OrderNumber = "ORD-" + DateTime.UtcNow.Ticks,
-                            CustomerId = (await context.Customers.FirstAsync(c => c.UserId == customerUser.Id)).Id,
-                            RestaurantId = comTamRest.Id,
+                            CustomerId = customer.Id,
+                            RestaurantId = orderRest.Id,
                             DeliveryAddress = "123 Le Loi, Q1",
                             Subtotal = menuItem.Price,
                             DeliveryFee = 15000,
@@ -513,19 +543,19 @@ public static class DbSeeder
                         });
                         
                         await context.SaveChangesAsync();
-                    }
 
-                    // Order 2: Active (Delivering)
-                    var order2 = new Order
-                    {
-                        Id = Guid.NewGuid(),
-                        OrderNumber = "ORD-" + DateTime.UtcNow.Ticks + "-2",
-                        CustomerId = (await context.Customers.FirstAsync(c => c.UserId == customerUser.Id)).Id,
-                        RestaurantId = comTamRest.Id,
-                        DeliveryAddress = "456 Nguyen Trai, Q5",
-                        DeliveryLatitude = 10.755, 
-                        DeliveryLongitude = 106.67,
-                        Subtotal = menuItem.Price * 2,
+
+                        // Order 2: Active (Delivering)
+                        var order2 = new Order
+                        {
+                            Id = Guid.NewGuid(),
+                            OrderNumber = "ORD-" + DateTime.UtcNow.Ticks + "-2",
+                            CustomerId = customer.Id, // FIX: Reuse customer object
+                            RestaurantId = orderRest.Id,
+                            DeliveryAddress = "456 Nguyen Trai, Q5",
+                            DeliveryLatitude = 10.755, 
+                            DeliveryLongitude = 106.67,
+                            Subtotal = menuItem.Price * 2,
                         DeliveryFee = 15000,
                         TotalAmount = (menuItem.Price * 2) + 15000,
                         Status = 4, // Delivering
@@ -614,6 +644,7 @@ public static class DbSeeder
                     
                     await context.SaveChangesAsync();
                     Log($"Seeded {earnings.Count} driver earning records. Balance: {totalEarnings}");
+                }
                 }
             }
             
@@ -715,8 +746,11 @@ public static class DbSeeder
             // ---------------------------------------------------------
             // Find the active order (Order 2 from step 6)
             // Find the active order (Order 2 from step 6)
-            var customerId = (await context.Customers.FirstAsync(c => c.UserId == customerUser.Id)).Id;
-            var activeOrder = await context.Orders.OrderByDescending(o => o.CreatedAt).FirstOrDefaultAsync(o => o.Status == 4 && o.CustomerId == customerId);
+            // Find the active order (Order 2 from step 6)
+            var customerForChat = await context.Customers.FirstOrDefaultAsync(c => c.UserId == customerUser.Id);
+            if (customerForChat == null) return;
+            
+            var activeOrder = await context.Orders.OrderByDescending(o => o.CreatedAt).FirstOrDefaultAsync(o => o.Status == 4 && o.CustomerId == customerForChat.Id);
             
             if (activeOrder != null && !await context.ChatMessages.AnyAsync(m => m.OrderId == activeOrder.Id))
             {
