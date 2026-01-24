@@ -24,7 +24,7 @@ public class MenuItemsController : ControllerBase
     {
         var item = await _context.MenuItems
             .Include(m => m.MenuCategory)
-            .Include(m => m.OrderItems) // To potentiall calc popularity or rating?
+                .ThenInclude(mc => mc.Restaurant) // Include Restaurant to get Rating
             .FirstOrDefaultAsync(m => m.Id == id);
 
         if (item == null)
@@ -32,20 +32,9 @@ public class MenuItemsController : ControllerBase
             return NotFound();
         }
 
-        // Real Rating Calculation
-        // 1. Find all completed orders containing this item that have reviews
-        var reviews = await _context.Reviews
-            .Include(r => r.Customer)
-            .Where(r => r.Order.OrderItems.Any(oi => oi.MenuItemId == id) && !r.IsDeleted)
-            .ToListAsync();
-
-        double rating = 0;
-        int ratingCount = reviews.Count;
-
-        if (ratingCount > 0)
-        {
-            rating = reviews.Average(r => r.FoodRating);
-        }
+        // User requirement: "Rating is Restaurant Rating"
+        double rating = item.MenuCategory.Restaurant.Rating;
+        int ratingCount = item.MenuCategory.Restaurant.RatingCount; 
 
         // Parse Options (Assuming stored as JSON string)
         object? options = null;
@@ -71,32 +60,11 @@ public class MenuItemsController : ControllerBase
             ImageUrl = item.ImageUrl ?? "https://placeholder.com/food",
             IsPopular = item.IsPopular,
             DiscountBadge = badge,
-            Rating = Math.Round(rating, 1),
+            Rating = rating,
             RatingCount = ratingCount,
             Size = "Tiêu chuẩn",
             Calories = 300 + new Random(id.GetHashCode()).Next(200), // Mock calories allowed
             Options = options
         };
-    }
-
-    [HttpGet("{id}/reviews")]
-    public async Task<ActionResult<object>> GetMenuItemReviews(Guid id)
-    {
-         var reviews = await _context.Reviews
-            .Include(r => r.Customer)
-                .ThenInclude(c => c.User)
-            .Where(r => r.Order.OrderItems.Any(oi => oi.MenuItemId == id) && !r.IsDeleted)
-            .OrderByDescending(r => r.CreatedAt)
-            .Select(r => new 
-            {
-                r.Id,
-                CustomerName = r.Customer.User.FullName, // Fixed access
-                r.FoodRating,
-                r.FoodComment,
-                r.CreatedAt
-            })
-            .ToListAsync();
-            
-        return Ok(reviews);
     }
 }
