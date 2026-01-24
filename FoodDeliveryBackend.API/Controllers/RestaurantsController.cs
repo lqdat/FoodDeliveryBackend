@@ -56,6 +56,23 @@ public class RestaurantsController : ControllerBase
             return NotFound();
         }
 
+        // Fetch Reviews for this Restaurant (via Orders)
+        var reviews = await _context.Reviews
+            .Include(r => r.Customer)
+                .ThenInclude(c => c.User)
+            .Where(r => r.Order.RestaurantId == id && !r.IsDeleted)
+            .OrderByDescending(r => r.CreatedAt)
+            .Take(20) // Limit to 20 recent reviews
+            .Select(r => new ReviewDto
+            {
+                Id = r.Id,
+                CustomerName = r.Customer.User.FullName,
+                Rating = r.FoodRating, // Assuming FoodRating represents the user's satisfaction with the meal/restaurant
+                Comment = r.FoodComment,
+                CreatedAt = r.CreatedAt
+            })
+            .ToListAsync();
+
         // Map to DTO
         var sections = new List<MenuSectionDto>();
 
@@ -135,6 +152,8 @@ public class RestaurantsController : ControllerBase
             DeliveryTime = $"{restaurant.DeliveryTime} min", 
             Tags = restaurant.Tags ?? new[] { "Món ngon", "Gần bạn" },
             IsFavorite = false, // TODO: Check with user favorites
+            RatingCount = restaurant.RatingCount,
+            Reviews = reviews,
             MenuSections = sections
         };
     }

@@ -14,9 +14,20 @@ public class RestaurantDetailDto
     public string DeliveryTime { get; set; } = null!; // e.g. "15-20p"
     public string[] Tags { get; set; } = Array.Empty<string>();
     public bool IsFavorite { get; set; } 
+    public int RatingCount { get; set; }
+    public List<ReviewDto> Reviews { get; set; } = new();
 
     // Menu Sections
     public List<MenuSectionDto> MenuSections { get; set; } = new();
+}
+
+public class ReviewDto
+{
+    public Guid Id { get; set; }
+    public string CustomerName { get; set; } = null!;
+    public int Rating { get; set; }
+    public string? Comment { get; set; }
+    public DateTime CreatedAt { get; set; }
 }
 
 public class MenuSectionDto
