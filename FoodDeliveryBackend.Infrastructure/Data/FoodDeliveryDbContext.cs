@@ -53,10 +53,10 @@ public class FoodDeliveryDbContext : DbContext
 
         modelBuilder.Entity<Cart>(entity =>
         {
-            entity.HasIndex(e => e.CustomerId, "IX_Carts_CustomerId").IsUnique();
+            entity.HasIndex(e => e.CustomerId, "IX_Carts_CustomerId"); // Removed IsUnique
             entity.HasIndex(e => e.RestaurantId, "IX_Carts_RestaurantId");
             entity.Property(e => e.Id).ValueGeneratedNever();
-            entity.HasOne(d => d.Customer).WithOne(p => p.Cart).HasForeignKey<Cart>(d => d.CustomerId);
+            entity.HasOne(d => d.Customer).WithMany(p => p.Carts).HasForeignKey(d => d.CustomerId);
             entity.HasOne(d => d.Restaurant).WithMany(p => p.Carts).HasForeignKey(d => d.RestaurantId).OnDelete(DeleteBehavior.Restrict);
         });
 
