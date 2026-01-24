@@ -9,6 +9,13 @@ public class AddToCartRequest
     // public string? Options { get; set; } // Simplified for now
 }
 
+public class UpdateCartItemRequest
+{
+    public Guid CartItemId { get; set; }
+    public int Quantity { get; set; } // New quantity
+    public string? Notes { get; set; }
+}
+
 public class CartResponse
 {
     public Guid Id { get; set; }

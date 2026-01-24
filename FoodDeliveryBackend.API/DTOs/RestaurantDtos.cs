@@ -9,6 +9,8 @@ public class RestaurantDetailDto
     public string Address { get; set; } = null!;
     public double Rating { get; set; }
     public double Distance { get; set; }
+    public double Latitude { get; set; }
+    public double Longitude { get; set; }
     public string DeliveryTime { get; set; } = null!; // e.g. "15-20p"
     public string[] Tags { get; set; } = Array.Empty<string>();
     public bool IsFavorite { get; set; } 
@@ -36,6 +38,15 @@ public class MenuItemDetailDto
     public string? DiscountBadge { get; set; } // "-15%" badge
 }
 
+public class MenuItemFullDetailDto : MenuItemDetailDto
+{
+    public double Rating { get; set; }
+    public int RatingCount { get; set; }
+    public string Size { get; set; } = "Vừa"; // Default size description
+    public int Calories { get; set; } // e.g. 500 kcal
+    public object? Options { get; set; } // JSON Parsed options
+}
+
 public class RestaurantSummaryDto
 {
     public Guid Id { get; set; }
@@ -44,6 +55,8 @@ public class RestaurantSummaryDto
     public string CoverUrl { get; set; } = null!;
     public double Rating { get; set; }
     public double Distance { get; set; }
+    public double Latitude { get; set; }
+    public double Longitude { get; set; }
     public int DeliveryTime { get; set; }
     public decimal MinPrice { get; set; }
     public bool IsTrending { get; set; }

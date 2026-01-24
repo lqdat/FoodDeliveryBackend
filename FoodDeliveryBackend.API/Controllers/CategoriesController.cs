@@ -54,6 +54,8 @@ public class CategoriesController : ControllerBase
                 CoverUrl = r.CoverImageUrl ?? r.ImageUrl,
                 Rating = r.Rating,
                 Distance = r.Distance,
+                Latitude = r.Latitude,
+                Longitude = r.Longitude,
                 DeliveryTime = r.DeliveryTime,
                 MinPrice = r.MinPrice,
                 IsTrending = r.IsTrending

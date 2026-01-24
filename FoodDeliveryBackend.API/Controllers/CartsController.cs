@@ -136,4 +136,26 @@ public class CartsController : ControllerBase
 
         return Ok(new { message = "Cart cleared" });
     }
+    [HttpPut("items")]
+    public async Task<IActionResult> UpdateCartItem([FromBody] UpdateCartItemRequest request)
+    {
+        var item = await _context.CartItems.FirstOrDefaultAsync(ci => ci.Id == request.CartItemId && !ci.IsDeleted);
+        if (item == null) return NotFound("Cart item not found");
+
+        if (request.Quantity <= 0)
+        {
+            // Remove item if quantity is 0 or less
+            item.IsDeleted = true;
+            item.Quantity = 0;
+        }
+        else
+        {
+            item.Quantity = request.Quantity;
+            if (request.Notes != null) item.Notes = request.Notes;
+            item.UpdatedAt = DateTime.UtcNow;
+        }
+
+        await _context.SaveChangesAsync();
+        return Ok(new { message = "Cart item updated" });
+    }
 }

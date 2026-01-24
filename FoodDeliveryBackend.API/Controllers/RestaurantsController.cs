@@ -130,6 +130,8 @@ public class RestaurantsController : ControllerBase
             Address = restaurant.Address,
             Rating = restaurant.Rating,
             Distance = restaurant.Distance,
+            Latitude = restaurant.Latitude,
+            Longitude = restaurant.Longitude,
             DeliveryTime = $"{restaurant.DeliveryTime} min", 
             Tags = restaurant.Tags ?? new[] { "Món ngon", "Gần bạn" },
             IsFavorite = false, // TODO: Check with user favorites
