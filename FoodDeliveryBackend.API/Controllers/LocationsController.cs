@@ -145,6 +145,37 @@ public class LocationsController : ControllerBase
         });
     }
 
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdateAddress(Guid id, [FromBody] UpdateAddressRequest request)
+    {
+        var customer = await GetCurrentCustomerAsync();
+        if (customer == null) return Unauthorized();
+
+        var address = await _context.Addresses.FirstOrDefaultAsync(a => a.Id == id && a.CustomerId == customer.Id);
+        if (address == null) return NotFound();
+
+        // If setting as default, unset others first
+        if (request.IsDefault && !address.IsDefault)
+        {
+            var defaults = await _context.Addresses
+                .Where(a => a.CustomerId == customer.Id && a.IsDefault)
+                .ToListAsync();
+            foreach (var addr in defaults) addr.IsDefault = false;
+        }
+
+        address.Label = request.Label;
+        address.Name = request.Name;
+        address.FullAddress = request.FullAddress;
+        address.Note = request.Note;
+        address.Latitude = request.Latitude;
+        address.Longitude = request.Longitude;
+        address.IsDefault = request.IsDefault;
+        address.UpdatedAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync();
+        return Ok(new { message = "Address updated" });
+    }
+
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteAddress(Guid id)
     {
