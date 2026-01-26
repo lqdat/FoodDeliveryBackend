@@ -9,7 +9,9 @@ public partial class Address
 
     public Guid CustomerId { get; set; }
 
-    public string Label { get; set; } = null!;
+    public string Label { get; set; } = null!; // Classification: Home/Work
+
+    public string? Name { get; set; } // Memorable Name: "Nha vo", "Nha nguoi yeu"
 
     public string FullAddress { get; set; } = null!;
 

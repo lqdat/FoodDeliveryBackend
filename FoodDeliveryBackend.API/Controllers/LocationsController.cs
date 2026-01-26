@@ -69,6 +69,7 @@ public class LocationsController : ControllerBase
             {
                 Id = a.Id,
                 Label = a.Label,
+                Name = !string.IsNullOrEmpty(a.Name) ? $"{a.Name} - {a.FullAddress}" : a.FullAddress,
                 FullAddress = a.FullAddress,
                 Note = a.Note,
                 Latitude = a.Latitude,
@@ -118,6 +119,7 @@ public class LocationsController : ControllerBase
             Id = Guid.NewGuid(),
             CustomerId = customer.Id,
             Label = request.Label,
+            Name = request.Name,
             FullAddress = request.FullAddress,
             Note = request.Note,
             Latitude = request.Latitude,
@@ -134,6 +136,7 @@ public class LocationsController : ControllerBase
         {
             Id = address.Id,
             Label = address.Label,
+            Name = address.Name,
             FullAddress = address.FullAddress,
             Note = address.Note,
             Latitude = address.Latitude,
