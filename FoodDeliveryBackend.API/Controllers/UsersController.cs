@@ -212,38 +212,37 @@ public class UsersController : ControllerBase
         var user = await _context.Users.FindAsync(userId);
         if (user == null) return NotFound("User not found.");
 
-        // Define path - Use /data for Railway Volume, otherwise wwwroot
-        string uploadsFolder;
-        string urlBasePath;
-        
-        if (Directory.Exists("/data"))
-        {
-            // Railway Volume mounted at /data
-            uploadsFolder = "/data/uploads";
-            urlBasePath = "/uploads"; // Will need reverse proxy or static file config
-        }
-        else
-        {
-            // Local development
-            uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
-            urlBasePath = "/uploads";
-        }
-        
-        if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
+        // Cloudinary upload
+        var cloudName = Environment.GetEnvironmentVariable("CLOUDINARY_CLOUD_NAME");
+        var apiKey = Environment.GetEnvironmentVariable("CLOUDINARY_API_KEY");
+        var apiSecret = Environment.GetEnvironmentVariable("CLOUDINARY_API_SECRET");
 
-        // Unique filename
-        var fileName = $"{userId}_{DateTime.UtcNow.Ticks}{Path.GetExtension(file.FileName)}";
-        var filePath = Path.Combine(uploadsFolder, fileName);
-
-        // Save file
-        using (var stream = new FileStream(filePath, FileMode.Create))
+        if (string.IsNullOrEmpty(cloudName) || string.IsNullOrEmpty(apiKey) || string.IsNullOrEmpty(apiSecret))
         {
-            await file.CopyToAsync(stream);
+            return StatusCode(500, "Cloudinary not configured.");
         }
 
-        // Construct URL
-        var baseUrl = $"{Request.Scheme}://{Request.Host}{Request.PathBase}";
-        var avatarUrl = $"{baseUrl}/uploads/{fileName}";
+        var account = new CloudinaryDotNet.Account(cloudName, apiKey, apiSecret);
+        var cloudinary = new CloudinaryDotNet.Cloudinary(account);
+
+        using var stream = file.OpenReadStream();
+        var uploadParams = new CloudinaryDotNet.Actions.ImageUploadParams
+        {
+            File = new CloudinaryDotNet.FileDescription(file.FileName, stream),
+            Folder = "avatars",
+            PublicId = $"user_{userId}",
+            Overwrite = true,
+            Transformation = new CloudinaryDotNet.Transformation().Width(300).Height(300).Crop("fill").Gravity("face")
+        };
+
+        var uploadResult = await cloudinary.UploadAsync(uploadParams);
+
+        if (uploadResult.Error != null)
+        {
+            return StatusCode(500, $"Upload failed: {uploadResult.Error.Message}");
+        }
+
+        var avatarUrl = uploadResult.SecureUrl.ToString();
 
         // Update DB
         user.AvatarUrl = avatarUrl;
