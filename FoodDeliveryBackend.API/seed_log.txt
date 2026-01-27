@@ -76,3 +76,13 @@ DETAIL: Detail redacted as it may contain sensitive data. Specify 'Include Error
    at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
    at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
    at FoodDeliveryBackend.Infrastructure.Data.DbSeeder.SeedAsync(FoodDeliveryDbContext context) in D:\DeliverFood\FoodDeliveryBackend\FoodDeliveryBackend.Infrastructure\Data\DbSeeder.cs:line 207
+1/27/2026 9:22:19 AM: Starting Data Seeding...
+1/27/2026 9:22:19 AM: CLEANING DATABASE FOR RESET...
+1/27/2026 9:22:24 AM: Database cleared.
+1/27/2026 9:22:30 AM: Seeded 7 Global Categories.
+1/27/2026 9:22:43 AM: Seeded/Updated all target restaurants with UNIQUE Merchant Accounts and DYNAMIC Categories.
+1/27/2026 9:22:46 AM: Seeded 138 driver earning records. Balance: 4205000
+1/27/2026 9:22:47 AM: Seeded sample Vouchers.
+1/27/2026 9:22:48 AM: Seeded sample Notifications.
+1/27/2026 9:22:50 AM: Seeded sample Chat Messages.
+1/27/2026 9:22:50 AM: Seed completed successfully!
