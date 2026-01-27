@@ -60,3 +60,51 @@ public class ChangePasswordRequest
     public string CurrentPassword { get; set; } = null!;
     public string NewPassword { get; set; } = null!;
 }
+
+// Settings Screen DTOs
+public class UserSettingsDto
+{
+    // Account Section
+    public SecuritySettingsDto Security { get; set; } = new();
+    public PrivacySettingsDto Privacy { get; set; } = new();
+    
+    // General Settings Section
+    public bool PushNotificationsEnabled { get; set; } = true;
+    public bool PromoEmailsEnabled { get; set; } = false;
+    public string Language { get; set; } = "vi"; // vi, en
+    public string LanguageDisplay { get; set; } = "Tiếng Việt";
+    public string Theme { get; set; } = "system"; // system, light, dark
+    public string ThemeDisplay { get; set; } = "Hệ thống";
+    
+    // App Info
+    public string AppVersion { get; set; } = "4.20.1";
+    public string BuildNumber { get; set; } = "892";
+}
+
+public class SecuritySettingsDto
+{
+    public bool HasPassword { get; set; } = true;
+    public bool FaceIdEnabled { get; set; } = false;
+    public bool FingerprintEnabled { get; set; } = false;
+    public DateTime? LastPasswordChange { get; set; }
+}
+
+public class PrivacySettingsDto
+{
+    public bool AllowDataCollection { get; set; } = true;
+    public bool AllowLocationTracking { get; set; } = true;
+    public bool AllowPersonalizedAds { get; set; } = true;
+}
+
+public class UpdateSettingsRequest
+{
+    public bool? PushNotificationsEnabled { get; set; }
+    public bool? PromoEmailsEnabled { get; set; }
+    public string? Language { get; set; }
+    public string? Theme { get; set; }
+    public bool? FaceIdEnabled { get; set; }
+    public bool? FingerprintEnabled { get; set; }
+    public bool? AllowDataCollection { get; set; }
+    public bool? AllowLocationTracking { get; set; }
+    public bool? AllowPersonalizedAds { get; set; }
+}

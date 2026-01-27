@@ -251,4 +251,58 @@ public class UsersController : ControllerBase
 
         return Ok(new { avatarUrl });
     }
+
+    // GET: api/users/settings
+    [HttpGet("settings")]
+    public async Task<ActionResult<UserSettingsDto>> GetSettings()
+    {
+        var userId = GetUserId();
+        var user = await _context.Users.FindAsync(userId);
+        if (user == null) return NotFound("User not found.");
+
+        // In a real app, these settings would be stored in DB
+        // For now, return mock data matching the UI
+        var settings = new UserSettingsDto
+        {
+            Security = new SecuritySettingsDto
+            {
+                HasPassword = !string.IsNullOrEmpty(user.PasswordHash),
+                FaceIdEnabled = false,
+                FingerprintEnabled = false,
+                LastPasswordChange = user.UpdatedAt
+            },
+            Privacy = new PrivacySettingsDto
+            {
+                AllowDataCollection = true,
+                AllowLocationTracking = true,
+                AllowPersonalizedAds = true
+            },
+            PushNotificationsEnabled = true,
+            PromoEmailsEnabled = false,
+            Language = "vi",
+            LanguageDisplay = "Tiếng Việt",
+            Theme = "system",
+            ThemeDisplay = "Hệ thống",
+            AppVersion = "4.20.1",
+            BuildNumber = "892"
+        };
+
+        return Ok(settings);
+    }
+
+    // PUT: api/users/settings
+    [HttpPut("settings")]
+    public async Task<IActionResult> UpdateSettings([FromBody] UpdateSettingsRequest request)
+    {
+        var userId = GetUserId();
+        var user = await _context.Users.FindAsync(userId);
+        if (user == null) return NotFound("User not found.");
+
+        // In a real app, save to UserSettings table
+        // For now, just acknowledge the update
+        user.UpdatedAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "Cài đặt đã được cập nhật" });
+    }
 }

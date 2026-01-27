@@ -351,7 +351,7 @@ public static class DbSeeder
                     Name = "Koí Thé", 
                     Category = "Trà Sữa", 
                     ImageUrl = "https://images.unsplash.com/photo-1558359250-9aa4e09f5fa4",
-                    CoverImageUrl = "https://images.unsplash.com/photo-1497515114629-f71d768fd61c",
+                    CoverImageUrl = "https://plus.unsplash.com/premium_photo-1663928246165-1ab1c85ea324?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
                     Address = "Vivo City, Q.7",
                     Rating = 4.9, RatingCount = 500, DeliveryTime = 15, DeliveryFee = 10000m, MinPrice = 30000m, Distance = 1.0,
                     Tags = new[] { "Trà Sữa", "Macchiato", "Trân Châu" },
@@ -497,6 +497,9 @@ public static class DbSeeder
                     var menuItem = orderRest.MenuCategories.SelectMany(mc => mc.MenuItems).FirstOrDefault();
                     if (menuItem != null)
                     {
+                        // Get driver for linking to orders
+                        var orderDriver = await context.Drivers.FirstOrDefaultAsync(d => d.UserId == driverUser.Id);
+                        
                         // Order 1: Completed
                         var customer = await context.Customers.FirstOrDefaultAsync(c => c.UserId == customerUser.Id);
                         if (customer == null) return; // FIX: Use return instead of continue
@@ -513,6 +516,7 @@ public static class DbSeeder
                             TotalAmount = menuItem.Price + 15000,
                             Status = 5, // Completed
                             PaymentMethod = 1, // Cash
+                            DriverId = orderDriver?.Id, // Link driver to order
                             CreatedAt = now.AddDays(-1),
                             ConfirmedAt = now.AddDays(-1).AddMinutes(5),
                             PickedUpAt = now.AddDays(-1).AddMinutes(20),
@@ -560,6 +564,7 @@ public static class DbSeeder
                         TotalAmount = (menuItem.Price * 2) + 15000,
                         Status = 4, // Delivering
                         PaymentMethod = 1, // Cash
+                        DriverId = orderDriver?.Id, // Link driver to order
                         EstimatedDeliveryMinutes = 15,
                         Distance = 3.5,
                         CreatedAt = now.AddMinutes(-20),
@@ -742,53 +747,221 @@ public static class DbSeeder
             }
 
             // ---------------------------------------------------------
-            // 9. Seed Chat Messages (New)
+            // 9. Seed Chat Messages (Realistic conversations)
             // ---------------------------------------------------------
-            // Find the active order (Order 2 from step 6)
-            // Find the active order (Order 2 from step 6)
-            // Find the active order (Order 2 from step 6)
             var customerForChat = await context.Customers.FirstOrDefaultAsync(c => c.UserId == customerUser.Id);
             if (customerForChat == null) return;
             
-            var activeOrder = await context.Orders.OrderByDescending(o => o.CreatedAt).FirstOrDefaultAsync(o => o.Status == 4 && o.CustomerId == customerForChat.Id);
+            // Get all orders for this customer to add chat messages
+            var allOrders = await context.Orders
+                .Where(o => o.CustomerId == customerForChat.Id)
+                .OrderByDescending(o => o.CreatedAt)
+                .ToListAsync();
             
-            if (activeOrder != null && !await context.ChatMessages.AnyAsync(m => m.OrderId == activeOrder.Id))
+            foreach (var order in allOrders)
             {
-                var chatMessages = new List<ChatMessage>
-                {
-                    new ChatMessage
-                    {
-                        Id = Guid.NewGuid(),
-                        OrderId = activeOrder.Id,
-                        SenderId = driverUser.Id, // Driver
-                        IsFromCustomer = false,
-                        Content = "Chào bạn, tôi đã nhận đơn và đang đến quán.",
-                        CreatedAt = activeOrder.CreatedAt.AddMinutes(5)
-                    },
-                    new ChatMessage
-                    {
-                         Id = Guid.NewGuid(),
-                        OrderId = activeOrder.Id,
-                        SenderId = customerUser.Id, // Customer
-                        IsFromCustomer = true,
-                        Content = "Dạ vâng, cảm ơn anh.",
-                        CreatedAt = activeOrder.CreatedAt.AddMinutes(6)
-                    },
-                     new ChatMessage
-                    {
-                         Id = Guid.NewGuid(),
-                        OrderId = activeOrder.Id,
-                        SenderId = driverUser.Id, // Driver
-                        IsFromCustomer = false,
-                        Content = "Tôi đã lấy được món, khoảng 10 phút nữa tôi tới nơi nhé.",
-                        CreatedAt = activeOrder.CreatedAt.AddMinutes(15)
-                    }
-                };
+                if (await context.ChatMessages.AnyAsync(m => m.OrderId == order.Id))
+                    continue;
 
-                await context.ChatMessages.AddRangeAsync(chatMessages);
-                await context.SaveChangesAsync();
-                Log("Seeded sample Chat Messages.");
+                var chatMessages = new List<ChatMessage>();
+                var baseTime = order.CreatedAt;
+
+                if (order.Status == 4) // Đang giao - cuộc hội thoại đang diễn ra
+                {
+                    chatMessages.AddRange(new[]
+                    {
+                        new ChatMessage
+                        {
+                            Id = Guid.NewGuid(),
+                            OrderId = order.Id,
+                            SenderId = driverUser.Id,
+                            IsFromCustomer = false,
+                            Content = "Chào bạn, mình là tài xế Tài Xe. Mình đã nhận đơn và đang trên đường đến quán nhé! 🏍️",
+                            CreatedAt = baseTime.AddMinutes(2),
+                            IsRead = true,
+                            ReadAt = baseTime.AddMinutes(3)
+                        },
+                        new ChatMessage
+                        {
+                            Id = Guid.NewGuid(),
+                            OrderId = order.Id,
+                            SenderId = customerUser.Id,
+                            IsFromCustomer = true,
+                            Content = "Dạ vâng, cảm ơn anh. Anh đến quán rồi nhắn mình nhé!",
+                            CreatedAt = baseTime.AddMinutes(3),
+                            IsRead = true,
+                            ReadAt = baseTime.AddMinutes(3)
+                        },
+                        new ChatMessage
+                        {
+                            Id = Guid.NewGuid(),
+                            OrderId = order.Id,
+                            SenderId = driverUser.Id,
+                            IsFromCustomer = false,
+                            Content = "Mình đến quán rồi nha, đang chờ lấy đồ ăn. Quán đông lắm 😅",
+                            CreatedAt = baseTime.AddMinutes(8),
+                            IsRead = true,
+                            ReadAt = baseTime.AddMinutes(9)
+                        },
+                        new ChatMessage
+                        {
+                            Id = Guid.NewGuid(),
+                            OrderId = order.Id,
+                            SenderId = customerUser.Id,
+                            IsFromCustomer = true,
+                            Content = "Ok anh, từ từ không sao ạ. Anh nhớ lấy thêm đũa muỗng giúp mình nhé!",
+                            CreatedAt = baseTime.AddMinutes(9),
+                            IsRead = true,
+                            ReadAt = baseTime.AddMinutes(9)
+                        },
+                        new ChatMessage
+                        {
+                            Id = Guid.NewGuid(),
+                            OrderId = order.Id,
+                            SenderId = driverUser.Id,
+                            IsFromCustomer = false,
+                            Content = "Được rồi nha! Mình đã lấy đồ xong, đang trên đường giao đến bạn. Khoảng 10-12 phút nữa mình tới 🚀",
+                            CreatedAt = baseTime.AddMinutes(14),
+                            IsRead = true,
+                            ReadAt = baseTime.AddMinutes(14)
+                        },
+                        new ChatMessage
+                        {
+                            Id = Guid.NewGuid(),
+                            OrderId = order.Id,
+                            SenderId = customerUser.Id,
+                            IsFromCustomer = true,
+                            Content = "Dạ mình ở tầng 3, phòng 302 nha anh. Anh đến bảo vệ mở cửa giùm",
+                            CreatedAt = baseTime.AddMinutes(15),
+                            IsRead = true,
+                            ReadAt = baseTime.AddMinutes(15)
+                        },
+                        new ChatMessage
+                        {
+                            Id = Guid.NewGuid(),
+                            OrderId = order.Id,
+                            SenderId = driverUser.Id,
+                            IsFromCustomer = false,
+                            Content = "Ok bạn! Mình gần tới rồi, còn khoảng 5 phút nữa thôi 📍",
+                            CreatedAt = baseTime.AddMinutes(18),
+                            IsRead = false
+                        }
+                    });
+                }
+                else if (order.Status == 5) // Đã hoàn thành - cuộc hội thoại đầy đủ
+                {
+                    chatMessages.AddRange(new[]
+                    {
+                        new ChatMessage
+                        {
+                            Id = Guid.NewGuid(),
+                            OrderId = order.Id,
+                            SenderId = driverUser.Id,
+                            IsFromCustomer = false,
+                            Content = "Xin chào! Mình là tài xế vừa nhận đơn của bạn. Mình đang đến quán lấy đồ nhé! 😊",
+                            CreatedAt = baseTime.AddMinutes(3),
+                            IsRead = true,
+                            ReadAt = baseTime.AddMinutes(4)
+                        },
+                        new ChatMessage
+                        {
+                            Id = Guid.NewGuid(),
+                            OrderId = order.Id,
+                            SenderId = customerUser.Id,
+                            IsFromCustomer = true,
+                            Content = "Dạ cảm ơn anh! Mình ngồi chờ nha.",
+                            CreatedAt = baseTime.AddMinutes(4),
+                            IsRead = true,
+                            ReadAt = baseTime.AddMinutes(4)
+                        },
+                        new ChatMessage
+                        {
+                            Id = Guid.NewGuid(),
+                            OrderId = order.Id,
+                            SenderId = driverUser.Id,
+                            IsFromCustomer = false,
+                            Content = "Mình tới quán rồi nha, quán đang làm đồ. Chắc 5-7 phút là xong.",
+                            CreatedAt = baseTime.AddMinutes(10),
+                            IsRead = true,
+                            ReadAt = baseTime.AddMinutes(11)
+                        },
+                        new ChatMessage
+                        {
+                            Id = Guid.NewGuid(),
+                            OrderId = order.Id,
+                            SenderId = customerUser.Id,
+                            IsFromCustomer = true,
+                            Content = "Okela anh, địa chỉ mình là 123 Lê Lợi, Q1 nhé. Có cổng màu xanh.",
+                            CreatedAt = baseTime.AddMinutes(11),
+                            IsRead = true,
+                            ReadAt = baseTime.AddMinutes(11)
+                        },
+                        new ChatMessage
+                        {
+                            Id = Guid.NewGuid(),
+                            OrderId = order.Id,
+                            SenderId = driverUser.Id,
+                            IsFromCustomer = false,
+                            Content = "Lấy đồ xong rồi, mình đang ship qua cho bạn đây! 🏃‍♂️",
+                            CreatedAt = baseTime.AddMinutes(18),
+                            IsRead = true,
+                            ReadAt = baseTime.AddMinutes(18)
+                        },
+                        new ChatMessage
+                        {
+                            Id = Guid.NewGuid(),
+                            OrderId = order.Id,
+                            SenderId = driverUser.Id,
+                            IsFromCustomer = false,
+                            Content = "Mình tới nơi rồi bạn ơi! Bạn ra cổng nhận đồ nha 📦",
+                            CreatedAt = baseTime.AddMinutes(30),
+                            IsRead = true,
+                            ReadAt = baseTime.AddMinutes(30)
+                        },
+                        new ChatMessage
+                        {
+                            Id = Guid.NewGuid(),
+                            OrderId = order.Id,
+                            SenderId = customerUser.Id,
+                            IsFromCustomer = true,
+                            Content = "Mình ra ngay! 1 phút",
+                            CreatedAt = baseTime.AddMinutes(31),
+                            IsRead = true,
+                            ReadAt = baseTime.AddMinutes(31)
+                        },
+                        new ChatMessage
+                        {
+                            Id = Guid.NewGuid(),
+                            OrderId = order.Id,
+                            SenderId = customerUser.Id,
+                            IsFromCustomer = true,
+                            Content = "Nhận được rồi anh, cảm ơn anh nhiều nha! Đánh giá 5 sao cho anh ⭐⭐⭐⭐⭐",
+                            CreatedAt = baseTime.AddMinutes(33),
+                            IsRead = true,
+                            ReadAt = baseTime.AddMinutes(33)
+                        },
+                        new ChatMessage
+                        {
+                            Id = Guid.NewGuid(),
+                            OrderId = order.Id,
+                            SenderId = driverUser.Id,
+                            IsFromCustomer = false,
+                            Content = "Cảm ơn bạn! Chúc bạn ngon miệng nha 😄🍽️",
+                            CreatedAt = baseTime.AddMinutes(34),
+                            IsRead = true,
+                            ReadAt = baseTime.AddMinutes(35)
+                        }
+                    });
+                }
+
+                if (chatMessages.Any())
+                {
+                    await context.ChatMessages.AddRangeAsync(chatMessages);
+                }
             }
+            
+            await context.SaveChangesAsync();
+            Log($"Seeded realistic Chat Messages for {allOrders.Count} orders.");
 
             Log("Seed completed successfully!");
             Console.WriteLine("Seed completed successfully!");

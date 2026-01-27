@@ -57,4 +57,23 @@ namespace FoodDeliveryBackend.API.DTOs
         public string ExpiryDate { get; set; } = null!;
         public string Cvv { get; set; } = null!;
     }
+
+    // Transaction Detail DTO for "Chi tiết giao dịch" screen
+    public class TransactionDetailDto
+    {
+        public Guid Id { get; set; }
+        public string Status { get; set; } = "Thành công"; // Thành công, Thất bại, Đang xử lý
+        public string StatusMessage { get; set; } = "Giao dịch đã được xác nhận";
+        public decimal Amount { get; set; } // Total amount paid (negative for payment)
+        public string TransactionCode { get; set; } = null!; // TXN987654321
+        public DateTime TransactionTime { get; set; }
+        public string PaymentMethod { get; set; } = null!; // "Ví điện tử", "MoMo", "Tiền mặt"
+        public string PaymentMethodIcon { get; set; } = "wallet"; // wallet, momo, cash
+        public decimal OrderTotal { get; set; } // Original order total before discount
+        public decimal DiscountAmount { get; set; } // Discount applied
+        public decimal RemainingBalance { get; set; } // Wallet balance after transaction
+        public string? OrderNumber { get; set; } // #ORD-1293
+        public string Type { get; set; } = "payment"; // payment, topup, refund, transfer
+        public string Barcode { get; set; } = null!; // For verification
+    }
 }

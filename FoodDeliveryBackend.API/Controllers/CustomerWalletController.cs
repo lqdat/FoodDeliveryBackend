@@ -155,6 +155,61 @@ namespace FoodDeliveryBackend.API.Controllers
             return Ok(transactions);
         }
 
+        // GET: api/wallet/transactions/{id} - Transaction Detail Screen
+        [HttpGet("transactions/{id}")]
+        public async Task<ActionResult<TransactionDetailDto>> GetTransactionDetail(Guid id)
+        {
+            var userId = GetUserId();
+            var customer = await _context.Customers.FirstOrDefaultAsync(c => c.UserId == userId);
+            if (customer == null) return NotFound("Customer profile not found.");
+
+            // Try to find this transaction as an Order
+            var order = await _context.Orders
+                .Include(o => o.Restaurant)
+                .FirstOrDefaultAsync(o => o.Id == id && o.CustomerId == customer.Id);
+
+            if (order != null)
+            {
+                // This is a payment transaction
+                return Ok(new TransactionDetailDto
+                {
+                    Id = order.Id,
+                    Status = order.Status == 5 ? "Thành công" : order.Status == 6 ? "Đã hủy" : "Đang xử lý",
+                    StatusMessage = order.Status == 5 ? "Giao dịch đã được xác nhận" : "Đơn hàng đã bị hủy",
+                    Amount = -order.TotalAmount,
+                    TransactionCode = $"TXN{order.OrderNumber.Replace("#", "").Replace("-", "")}",
+                    TransactionTime = order.CreatedAt,
+                    PaymentMethod = GetPaymentMethodName(order.PaymentMethod),
+                    PaymentMethodIcon = order.PaymentMethod == 1 ? "cash" : order.PaymentMethod == 2 ? "momo" : "wallet",
+                    OrderTotal = order.Subtotal,
+                    DiscountAmount = order.DiscountAmount,
+                    RemainingBalance = 1250000 + order.TotalAmount, // Mock: current balance + this transaction
+                    OrderNumber = order.OrderNumber,
+                    Type = "payment",
+                    Barcode = $"FD{order.Id.ToString().Substring(0, 8).ToUpper()}"
+                });
+            }
+
+            // If not an order, return mock data for other transaction types
+            return Ok(new TransactionDetailDto
+            {
+                Id = id,
+                Status = "Thành công",
+                StatusMessage = "Giao dịch đã được xác nhận",
+                Amount = 500000,
+                TransactionCode = $"TXN{DateTime.UtcNow.Ticks.ToString().Substring(0, 9)}",
+                TransactionTime = DateTime.UtcNow.AddHours(-2),
+                PaymentMethod = "Ví điện tử",
+                PaymentMethodIcon = "wallet",
+                OrderTotal = 0,
+                DiscountAmount = 0,
+                RemainingBalance = 1250000,
+                OrderNumber = null,
+                Type = "topup",
+                Barcode = $"FD{id.ToString().Substring(0, 8).ToUpper()}"
+            });
+        }
+
         [HttpPost("link")]
         public ActionResult LinkWallet([FromBody] LinkWalletRequest request)
         {
