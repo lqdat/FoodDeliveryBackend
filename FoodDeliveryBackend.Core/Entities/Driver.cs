@@ -9,13 +9,13 @@ public partial class Driver
 
     public Guid UserId { get; set; }
 
-    public string VehicleType { get; set; } = null!;
+    public string? VehicleType { get; set; }
 
-    public string VehiclePlate { get; set; } = null!;
+    public string? VehiclePlate { get; set; }
     
     public string? LicensePlate { get; set; }
 
-    public string VehicleBrand { get; set; } = null!;
+    public string? VehicleBrand { get; set; }
 
     public int Status { get; set; }
 

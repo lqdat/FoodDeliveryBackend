@@ -95,14 +95,24 @@ app.UseSwaggerUI();
 
 if (app.Environment.IsDevelopment())
 {
-    // Auto-seed data in Development
+    // Auto-seed data in Development (unless SKIP_SEEDING=true)
+    var skipSeeding = Environment.GetEnvironmentVariable("SKIP_SEEDING")?.ToLower() == "true";
+    
     using (var scope = app.Services.CreateScope())
     {
         var dbContext = scope.ServiceProvider.GetRequiredService<FoodDeliveryDbContext>();
         try
         {
             dbContext.Database.Migrate(); 
-            await DbSeeder.SeedAsync(dbContext);
+            
+            if (!skipSeeding)
+            {
+                await DbSeeder.SeedAsync(dbContext);
+            }
+            else
+            {
+                Console.WriteLine("Skipping database seeding (SKIP_SEEDING=true)");
+            }
         }
         catch (Exception ex)
         {
