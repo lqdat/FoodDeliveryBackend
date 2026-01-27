@@ -125,6 +125,16 @@ app.UseHttpsRedirection();
 app.UseCors("AllowAll");
 app.UseStaticFiles(); // Enable serving files from wwwroot
 
+// Serve files from Railway Volume /data if it exists
+if (Directory.Exists("/data"))
+{
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider("/data"),
+        RequestPath = ""
+    });
+}
+
 app.UseAuthentication(); // Enable Auth
 app.UseAuthorization();
 

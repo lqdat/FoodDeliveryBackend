@@ -212,8 +212,23 @@ public class UsersController : ControllerBase
         var user = await _context.Users.FindAsync(userId);
         if (user == null) return NotFound("User not found.");
 
-        // Define path
-        var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
+        // Define path - Use /data for Railway Volume, otherwise wwwroot
+        string uploadsFolder;
+        string urlBasePath;
+        
+        if (Directory.Exists("/data"))
+        {
+            // Railway Volume mounted at /data
+            uploadsFolder = "/data/uploads";
+            urlBasePath = "/uploads"; // Will need reverse proxy or static file config
+        }
+        else
+        {
+            // Local development
+            uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
+            urlBasePath = "/uploads";
+        }
+        
         if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
 
         // Unique filename
@@ -226,7 +241,7 @@ public class UsersController : ControllerBase
             await file.CopyToAsync(stream);
         }
 
-        // Construct URL (assuming default local dev, in Prod use CDN or proper Host handling)
+        // Construct URL
         var baseUrl = $"{Request.Scheme}://{Request.Host}{Request.PathBase}";
         var avatarUrl = $"{baseUrl}/uploads/{fileName}";
 
