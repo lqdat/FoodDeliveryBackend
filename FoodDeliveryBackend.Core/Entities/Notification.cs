@@ -18,6 +18,10 @@ public partial class Notification
     public Guid? ReferenceId { get; set; }
 
     public string? Data { get; set; }
+    
+    public string? ImageUrl { get; set; }
+    
+    public string? ActionUrl { get; set; }
 
     public bool IsRead { get; set; }
 

@@ -118,5 +118,124 @@ namespace FoodDeliveryBackend.API.Controllers
              
              return Ok(dto);
         }
+
+        /// <summary>
+        /// Get notification detail by ID
+        /// </summary>
+        [HttpGet("{id}")]
+        public async Task<ActionResult<NotificationDetailDto>> GetNotificationDetail(Guid id)
+        {
+            var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+            var notif = await _context.Notifications
+                .Where(n => n.Id == id && n.UserId == userId && !n.IsDeleted)
+                .Select(n => new NotificationDetailDto
+                {
+                    Id = n.Id,
+                    Title = n.Title,
+                    Message = n.Message,
+                    Type = n.Type,
+                    TypeName = n.Type == 1 ? "Đơn hàng" : n.Type == 2 ? "Khuyến mãi" : n.Type == 3 ? "Hệ thống" : "Khác",
+                    ReferenceId = n.ReferenceId,
+                    ImageUrl = n.ImageUrl,
+                    ActionUrl = n.ActionUrl,
+                    IsRead = n.IsRead,
+                    ReadAt = n.ReadAt,
+                    CreatedAt = n.CreatedAt
+                })
+                .FirstOrDefaultAsync();
+
+            if (notif == null) return NotFound("Notification not found");
+
+            // Auto-mark as read when viewing detail
+            var entity = await _context.Notifications.FindAsync(id);
+            if (entity != null && !entity.IsRead)
+            {
+                entity.IsRead = true;
+                entity.ReadAt = DateTime.UtcNow;
+                await _context.SaveChangesAsync();
+                notif.IsRead = true;
+                notif.ReadAt = entity.ReadAt;
+            }
+
+            return Ok(notif);
+        }
+
+        /// <summary>
+        /// Soft delete a notification
+        /// </summary>
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteNotification(Guid id)
+        {
+            var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+            var notif = await _context.Notifications
+                .FirstOrDefaultAsync(n => n.Id == id && n.UserId == userId && !n.IsDeleted);
+
+            if (notif == null) return NotFound("Notification not found");
+
+            notif.IsDeleted = true;
+            notif.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+
+            return Ok(new { success = true, message = "Notification deleted" });
+        }
+
+        /// <summary>
+        /// Delete multiple notifications by IDs (batch delete)
+        /// </summary>
+        [HttpDelete("batch")]
+        public async Task<IActionResult> DeleteNotificationsBatch([FromBody] DeleteNotificationsBatchRequest request)
+        {
+            var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+            if (request.Ids == null || !request.Ids.Any())
+                return BadRequest(new { success = false, message = "No notification IDs provided" });
+
+            var notifs = await _context.Notifications
+                .Where(n => request.Ids.Contains(n.Id) && n.UserId == userId && !n.IsDeleted)
+                .ToListAsync();
+
+            if (!notifs.Any())
+                return NotFound(new { success = false, message = "No matching notifications found" });
+
+            var now = DateTime.UtcNow;
+            foreach (var n in notifs)
+            {
+                n.IsDeleted = true;
+                n.UpdatedAt = now;
+            }
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { success = true, count = notifs.Count, message = $"{notifs.Count} notifications deleted" });
+        }
+
+        /// <summary>
+        /// Delete all notifications for current user
+        /// </summary>
+        [HttpDelete("all")]
+        public async Task<IActionResult> DeleteAllNotifications()
+        {
+            var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+            var notifs = await _context.Notifications
+                .Where(n => n.UserId == userId && !n.IsDeleted)
+                .ToListAsync();
+
+            if (!notifs.Any())
+                return Ok(new { success = true, count = 0, message = "No notifications to delete" });
+
+            var now = DateTime.UtcNow;
+            foreach (var n in notifs)
+            {
+                n.IsDeleted = true;
+                n.UpdatedAt = now;
+            }
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { success = true, count = notifs.Count, message = "All notifications deleted" });
+        }
     }
 }

@@ -26,6 +26,16 @@ public partial class ChatMessage
     public DateTime? UpdatedAt { get; set; }
 
     public bool IsDeleted { get; set; }
+    
+    /// <summary>
+    /// Soft delete by customer - message hidden only for customer
+    /// </summary>
+    public bool DeletedByCustomer { get; set; }
+    
+    /// <summary>
+    /// Soft delete by driver - message hidden only for driver
+    /// </summary>
+    public bool DeletedByDriver { get; set; }
 
     public virtual Order Order { get; set; } = null!;
 }

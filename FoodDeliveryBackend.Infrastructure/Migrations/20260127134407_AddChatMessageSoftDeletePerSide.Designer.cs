@@ -3,6 +3,7 @@ using System;
 using FoodDeliveryBackend.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FoodDeliveryBackend.Infrastructure.Migrations
 {
     [DbContext(typeof(FoodDeliveryDbContext))]
-    partial class FoodDeliveryDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260127134407_AddChatMessageSoftDeletePerSide")]
+    partial class AddChatMessageSoftDeletePerSide
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -619,16 +622,10 @@ namespace FoodDeliveryBackend.Infrastructure.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("ActionUrl")
-                        .HasColumnType("text");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Data")
-                        .HasColumnType("text");
-
-                    b.Property<string>("ImageUrl")
                         .HasColumnType("text");
 
                     b.Property<bool>("IsDeleted")

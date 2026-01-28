@@ -350,7 +350,7 @@ public static class DbSeeder
                     MerchantEmail = "koi@merchant.com", MerchantName = "Koi The Group",
                     Name = "Koí Thé", 
                     Category = "Trà Sữa", 
-                    ImageUrl = "https://images.unsplash.com/photo-1558359250-9aa4e09f5fa4",
+                    ImageUrl = "https://plus.unsplash.com/premium_photo-1663928246165-1ab1c85ea324?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
                     CoverImageUrl = "https://plus.unsplash.com/premium_photo-1663928246165-1ab1c85ea324?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
                     Address = "Vivo City, Q.7",
                     Rating = 4.9, RatingCount = 500, DeliveryTime = 15, DeliveryFee = 10000m, MinPrice = 30000m, Distance = 1.0,
@@ -702,49 +702,189 @@ public static class DbSeeder
             }
             
             // ---------------------------------------------------------
-            // 8. Seed Notifications (New)
+            // 8. Seed Notifications (Rich Data)
             // ---------------------------------------------------------
+            // Clear existing notifications for fresh seed
+            var existingNotifs = await context.Notifications.ToListAsync();
+            context.Notifications.RemoveRange(existingNotifs);
+            await context.SaveChangesAsync();
+
+            var notificationsList = new List<Notification>();
+            
+            // Customer Notifications
             if (customerUser != null)
             {
-                var notifs = new List<Notification>
+                notificationsList.AddRange(new[]
                 {
                     new Notification
                     {
                         Id = Guid.NewGuid(),
                         UserId = customerUser.Id,
-                        Title = "Chào mừng bạn mới!",
-                        Message = "Nhập mã WELCOME50 để được giảm 50% cho đơn hàng đầu tiên.",
+                        Title = "🎉 Chào mừng bạn mới!",
+                        Message = "Nhập mã WELCOME50 để được giảm 50% cho đơn hàng đầu tiên. Giảm tối đa 50.000đ cho đơn từ 100.000đ.",
                         Type = 2, // Promo
+                        ImageUrl = "https://images.unsplash.com/photo-1504674900247-0877df9cc836",
+                        ActionUrl = "/vouchers",
                         IsRead = false,
+                        CreatedAt = now.AddDays(-3)
+                    },
+                    new Notification
+                    {
+                        Id = Guid.NewGuid(),
+                        UserId = customerUser.Id,
+                        Title = "🍔 Flash Sale - Giảm 30%",
+                        Message = "Chỉ hôm nay! Giảm 30% cho tất cả đơn hàng từ KFC. Nhanh tay đặt ngay!",
+                        Type = 2, // Promo
+                        ImageUrl = "https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec",
+                        ActionUrl = "/restaurants/kfc",
+                        IsRead = true,
+                        ReadAt = now.AddDays(-2).AddHours(3),
+                        CreatedAt = now.AddDays(-2)
+                    },
+                    new Notification
+                    {
+                        Id = Guid.NewGuid(),
+                        UserId = customerUser.Id,
+                        Title = "✅ Đơn hàng đã giao thành công",
+                        Message = "Đơn hàng #ORD-8392 từ Cơm Tấm Sài Gòn đã được giao thành công. Đánh giá ngay để nhận 10 điểm thưởng!",
+                        Type = 1, // Order
+                        ImageUrl = "https://images.unsplash.com/photo-1590301157890-4810ed352733",
+                        ActionUrl = "/orders/history",
+                        IsRead = true,
+                        ReadAt = now.AddDays(-1).AddHours(2),
                         CreatedAt = now.AddDays(-1)
                     },
                     new Notification
                     {
                         Id = Guid.NewGuid(),
                         UserId = customerUser.Id,
-                        Title = "Đơn hàng đã giao thành công",
-                        Message = "Đơn hàng Cơm Tấm Sài Gòn của bạn đã được giao. Chúc bạn ngon miệng!",
+                        Title = "🚴 Tài xế đang đến",
+                        Message = "Tài xế Nguyễn Văn Tài Xe đang trên đường giao đơn hàng. Dự kiến còn 8 phút nữa sẽ đến.",
                         Type = 1, // Order
-                        IsRead = true,
-                        ReadAt = now.AddMinutes(-30),
-                        CreatedAt = now.AddMinutes(-35)
+                        ImageUrl = "https://images.unsplash.com/photo-1558618666-fcd25c85cd64",
+                        ActionUrl = "/orders/tracking",
+                        IsRead = false,
+                        CreatedAt = now.AddMinutes(-10)
                     },
-                     new Notification
+                    new Notification
                     {
                         Id = Guid.NewGuid(),
                         UserId = customerUser.Id,
-                        Title = "Tài xế đang đến",
-                        Message = "Tài xế Nguyễn Văn Tài Xe đang trên đường giao đơn hàng mới nhất đến bạn.",
+                        Title = "🔔 Nhà hàng đang chuẩn bị món",
+                        Message = "Nhà hàng Cơm Tấm Sài Gòn đã xác nhận và đang chuẩn bị đơn hàng của bạn.",
                         Type = 1, // Order
+                        ActionUrl = "/orders/tracking",
                         IsRead = false,
-                        CreatedAt = now.AddMinutes(-5)
+                        CreatedAt = now.AddMinutes(-25)
+                    },
+                    new Notification
+                    {
+                        Id = Guid.NewGuid(),
+                        UserId = customerUser.Id,
+                        Title = "💳 Nạp tiền thành công",
+                        Message = "Bạn đã nạp thành công 500.000đ vào ví. Số dư hiện tại: 750.000đ.",
+                        Type = 3, // System
+                        ActionUrl = "/wallet",
+                        IsRead = true,
+                        ReadAt = now.AddDays(-5).AddHours(1),
+                        CreatedAt = now.AddDays(-5)
+                    },
+                    new Notification
+                    {
+                        Id = Guid.NewGuid(),
+                        UserId = customerUser.Id,
+                        Title = "⭐ Đánh giá của bạn đã được ghi nhận",
+                        Message = "Cảm ơn bạn đã đánh giá 5 sao cho Koí Thé. Bạn đã nhận được 10 điểm thưởng!",
+                        Type = 3, // System
+                        ImageUrl = "https://images.unsplash.com/photo-1558359250-9aa4e09f5fa4",
+                        ActionUrl = "/loyalty",
+                        IsRead = false,
+                        CreatedAt = now.AddHours(-2)
                     }
-                };
-                
-                await context.Notifications.AddRangeAsync(notifs);
-                await context.SaveChangesAsync();
-                Log("Seeded sample Notifications.");
+                });
             }
+
+            // Driver Notifications
+            if (driverUser != null)
+            {
+                notificationsList.AddRange(new[]
+                {
+                    new Notification
+                    {
+                        Id = Guid.NewGuid(),
+                        UserId = driverUser.Id,
+                        Title = "📦 Đơn hàng mới gần bạn!",
+                        Message = "Có đơn hàng mới từ Nhà Hàng Xanh cách bạn 1.2km. Thu nhập dự kiến: 25.000đ.",
+                        Type = 1, // Order
+                        ImageUrl = "https://images.unsplash.com/photo-1540189549336-e6e99c3679fe",
+                        ActionUrl = "/driver/orders/available",
+                        IsRead = false,
+                        CreatedAt = now.AddMinutes(-3)
+                    },
+                    new Notification
+                    {
+                        Id = Guid.NewGuid(),
+                        UserId = driverUser.Id,
+                        Title = "💰 Thưởng hoàn thành mốc tuần",
+                        Message = "Chúc mừng! Bạn đã hoàn thành 50 đơn trong tuần và nhận thưởng 500.000đ vào ví.",
+                        Type = 2, // Bonus/Promo
+                        ImageUrl = "https://images.unsplash.com/photo-1579621970563-ebec7560ff3e",
+                        ActionUrl = "/driver/wallet",
+                        IsRead = true,
+                        ReadAt = now.AddDays(-1).AddHours(5),
+                        CreatedAt = now.AddDays(-1)
+                    },
+                    new Notification
+                    {
+                        Id = Guid.NewGuid(),
+                        UserId = driverUser.Id,
+                        Title = "⚡ Giờ cao điểm - Thu nhập x1.5",
+                        Message = "Từ 11:00 - 13:00 hôm nay, tất cả đơn hàng được nhân 1.5 lần thu nhập. Bật online ngay!",
+                        Type = 2, // Promo
+                        ActionUrl = "/driver/home",
+                        IsRead = false,
+                        CreatedAt = now.AddHours(-1)
+                    },
+                    new Notification
+                    {
+                        Id = Guid.NewGuid(),
+                        UserId = driverUser.Id,
+                        Title = "✅ Đơn hoàn thành - Thu nhập 35.000đ",
+                        Message = "Đơn hàng #ORD-7823 đã giao thành công. 35.000đ đã được cộng vào ví của bạn.",
+                        Type = 1, // Order
+                        ActionUrl = "/driver/wallet",
+                        IsRead = true,
+                        ReadAt = now.AddHours(-3),
+                        CreatedAt = now.AddHours(-3).AddMinutes(-5)
+                    },
+                    new Notification
+                    {
+                        Id = Guid.NewGuid(),
+                        UserId = driverUser.Id,
+                        Title = "📋 Cập nhật chính sách mới",
+                        Message = "Từ ngày 01/02, phí dịch vụ sẽ được điều chỉnh. Xem chi tiết để biết thêm.",
+                        Type = 3, // System
+                        ActionUrl = "/driver/policy",
+                        IsRead = false,
+                        CreatedAt = now.AddDays(-2)
+                    },
+                    new Notification
+                    {
+                        Id = Guid.NewGuid(),
+                        UserId = driverUser.Id,
+                        Title = "⭐ Khách hàng đánh giá 5 sao",
+                        Message = "Khách hàng Nguyễn Văn Khách đã đánh giá bạn 5 sao: \"Giao hàng nhanh, thái độ tốt!\"",
+                        Type = 3, // System
+                        ActionUrl = "/driver/ratings",
+                        IsRead = false,
+                        CreatedAt = now.AddMinutes(-45)
+                    }
+                });
+            }
+
+            await context.Notifications.AddRangeAsync(notificationsList);
+            await context.SaveChangesAsync();
+            Log($"Seeded {notificationsList.Count} rich Notifications for customer and driver.");
 
             // ---------------------------------------------------------
             // 9. Seed Chat Messages (Realistic conversations)

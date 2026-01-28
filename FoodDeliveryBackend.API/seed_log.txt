@@ -106,3 +106,43 @@ DETAIL: Detail redacted as it may contain sensitive data. Specify 'Include Error
 1/27/2026 4:26:59 PM: Seeded sample Notifications.
 1/27/2026 4:27:01 PM: Seeded realistic Chat Messages for 2 orders.
 1/27/2026 4:27:01 PM: Seed completed successfully!
+1/27/2026 8:42:37 PM: Starting Data Seeding...
+1/27/2026 8:42:37 PM: CLEANING DATABASE FOR RESET...
+1/27/2026 8:42:43 PM: Database cleared.
+1/27/2026 8:42:47 PM: Seeded 7 Global Categories.
+1/27/2026 8:42:57 PM: Seeded/Updated all target restaurants with UNIQUE Merchant Accounts and DYNAMIC Categories.
+1/27/2026 8:43:01 PM: Seeded 146 driver earning records. Balance: 4620000
+1/27/2026 8:43:01 PM: Seeded sample Vouchers.
+1/27/2026 8:43:02 PM: Seeded sample Notifications.
+1/27/2026 8:43:03 PM: Seeded realistic Chat Messages for 2 orders.
+1/27/2026 8:43:03 PM: Seed completed successfully!
+1/27/2026 8:45:29 PM: Starting Data Seeding...
+1/27/2026 8:45:29 PM: CLEANING DATABASE FOR RESET...
+1/27/2026 8:45:35 PM: Database cleared.
+1/27/2026 8:45:39 PM: Seeded 7 Global Categories.
+1/27/2026 8:45:49 PM: Seeded/Updated all target restaurants with UNIQUE Merchant Accounts and DYNAMIC Categories.
+1/27/2026 8:45:52 PM: Seeded 154 driver earning records. Balance: 4715000
+1/27/2026 8:45:53 PM: Seeded sample Vouchers.
+1/27/2026 8:45:53 PM: Seeded sample Notifications.
+1/27/2026 8:45:55 PM: Seeded realistic Chat Messages for 2 orders.
+1/27/2026 8:45:55 PM: Seed completed successfully!
+1/27/2026 9:06:35 PM: Starting Data Seeding...
+1/27/2026 9:06:35 PM: CLEANING DATABASE FOR RESET...
+1/27/2026 9:06:41 PM: Database cleared.
+1/27/2026 9:06:46 PM: Seeded 7 Global Categories.
+1/27/2026 9:06:55 PM: Seeded/Updated all target restaurants with UNIQUE Merchant Accounts and DYNAMIC Categories.
+1/27/2026 9:06:58 PM: Seeded 142 driver earning records. Balance: 4395000
+1/27/2026 9:06:59 PM: Seeded sample Vouchers.
+1/27/2026 9:07:00 PM: Seeded 13 rich Notifications for customer and driver.
+1/27/2026 9:07:02 PM: Seeded realistic Chat Messages for 2 orders.
+1/27/2026 9:07:02 PM: Seed completed successfully!
+1/28/2026 5:47:06 PM: Starting Data Seeding...
+1/28/2026 5:47:06 PM: CLEANING DATABASE FOR RESET...
+1/28/2026 5:47:12 PM: Database cleared.
+1/28/2026 5:47:16 PM: Seeded 7 Global Categories.
+1/28/2026 5:47:25 PM: Seeded/Updated all target restaurants with UNIQUE Merchant Accounts and DYNAMIC Categories.
+1/28/2026 5:47:28 PM: Seeded 159 driver earning records. Balance: 4905000
+1/28/2026 5:47:29 PM: Seeded sample Vouchers.
+1/28/2026 5:47:30 PM: Seeded 13 rich Notifications for customer and driver.
+1/28/2026 5:47:31 PM: Seeded realistic Chat Messages for 2 orders.
+1/28/2026 5:47:31 PM: Seed completed successfully!
