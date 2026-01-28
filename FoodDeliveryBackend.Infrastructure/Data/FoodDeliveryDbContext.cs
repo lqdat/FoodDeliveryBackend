@@ -2,6 +2,9 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using FoodDeliveryBackend.Core.Entities;
+using FoodDeliveryBackend.Core.Entities.Admin;
+using FoodDeliveryBackend.Core.Entities.Approval;
+using FoodDeliveryBackend.Core.Entities.ChainOwner;
 
 namespace FoodDeliveryBackend.Infrastructure.Data;
 
@@ -12,6 +15,7 @@ public class FoodDeliveryDbContext : DbContext
     {
     }
 
+    // Existing entities
     public virtual DbSet<Address> Addresses { get; set; }
     public virtual DbSet<Cart> Carts { get; set; }
     public virtual DbSet<CartItem> CartItems { get; set; }
@@ -33,8 +37,21 @@ public class FoodDeliveryDbContext : DbContext
     public virtual DbSet<SearchHistory> SearchHistories { get; set; }
     public virtual DbSet<User> Users { get; set; }
     public virtual DbSet<Voucher> Vouchers { get; set; }
-
     public virtual DbSet<CustomerVoucher> CustomerVouchers { get; set; }
+
+    // Admin entities
+    public virtual DbSet<AdminAccount> AdminAccounts { get; set; }
+
+    // Approval entities
+    public virtual DbSet<ApprovalRequest> ApprovalRequests { get; set; }
+    public virtual DbSet<ApprovalLog> ApprovalLogs { get; set; }
+
+    // ChainOwner entities
+    public virtual DbSet<ChainOwnerAccount> ChainOwnerAccounts { get; set; }
+    public virtual DbSet<StoreAccount> StoreAccounts { get; set; }
+    public virtual DbSet<StoreManager> StoreManagers { get; set; }
+    public virtual DbSet<Food> Foods { get; set; }
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -235,5 +252,109 @@ public class FoodDeliveryDbContext : DbContext
             entity.Property(e => e.MaxDiscountAmount).HasPrecision(18, 2);
             entity.Property(e => e.MinOrderAmount).HasPrecision(18, 2);
         });
+
+        // ==================== ADMIN ENTITIES ====================
+        
+        modelBuilder.Entity<AdminAccount>(entity =>
+        {
+            entity.ToTable("admin_accounts");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).ValueGeneratedNever();
+            entity.HasIndex(e => e.Email, "IX_AdminAccounts_Email").IsUnique();
+            entity.HasIndex(e => e.RegionCode, "IX_AdminAccounts_RegionCode");
+            entity.Property(e => e.Role).HasConversion<int>();
+            entity.Property(e => e.IsActive).HasDefaultValue(true);
+        });
+
+        // ==================== APPROVAL ENTITIES ====================
+        
+        modelBuilder.Entity<ApprovalRequest>(entity =>
+        {
+            entity.ToTable("approval_requests");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).ValueGeneratedNever();
+            entity.HasIndex(e => new { e.EntityType, e.EntityId }, "IX_ApprovalRequests_Entity");
+            entity.HasIndex(e => e.RegionCode, "IX_ApprovalRequests_RegionCode");
+            entity.HasIndex(e => e.CurrentStatus, "IX_ApprovalRequests_Status");
+            entity.Property(e => e.EntityType).HasConversion<int>();
+            entity.Property(e => e.CurrentStatus).HasConversion<int>();
+        });
+
+        modelBuilder.Entity<ApprovalLog>(entity =>
+        {
+            entity.ToTable("approval_logs");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).ValueGeneratedNever();
+            entity.HasIndex(e => e.ApprovalRequestId, "IX_ApprovalLogs_RequestId");
+            entity.HasIndex(e => e.CreatedAt, "IX_ApprovalLogs_CreatedAt");
+            entity.Property(e => e.Action).HasConversion<int>();
+            entity.Property(e => e.FromStatus).HasConversion<int?>();
+            entity.Property(e => e.ToStatus).HasConversion<int>();
+            entity.Property(e => e.PerformerRole).HasConversion<int?>();
+            entity.HasOne(d => d.ApprovalRequest)
+                  .WithMany(p => p.ApprovalLogs)
+                  .HasForeignKey(d => d.ApprovalRequestId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // ==================== CHAIN OWNER ENTITIES ====================
+        
+        modelBuilder.Entity<ChainOwnerAccount>(entity =>
+        {
+            entity.ToTable("chain_owner_accounts");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).ValueGeneratedNever();
+            entity.HasIndex(e => e.Email, "IX_ChainOwnerAccounts_Email").IsUnique();
+            entity.HasIndex(e => e.RegionCode, "IX_ChainOwnerAccounts_RegionCode");
+            entity.HasIndex(e => e.Status, "IX_ChainOwnerAccounts_Status");
+            entity.Property(e => e.Status).HasConversion<int>();
+        });
+
+        modelBuilder.Entity<StoreAccount>(entity =>
+        {
+            entity.ToTable("store_accounts");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).ValueGeneratedNever();
+            entity.HasIndex(e => e.ChainOwnerId, "IX_StoreAccounts_ChainOwnerId");
+            entity.HasIndex(e => e.RegionCode, "IX_StoreAccounts_RegionCode");
+            entity.HasIndex(e => e.Status, "IX_StoreAccounts_Status");
+            entity.Property(e => e.Status).HasConversion<int>();
+            entity.HasOne(d => d.ChainOwner)
+                  .WithMany(p => p.Stores)
+                  .HasForeignKey(d => d.ChainOwnerId)
+                  .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<StoreManager>(entity =>
+        {
+            entity.ToTable("store_managers");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).ValueGeneratedNever();
+            entity.HasIndex(e => e.StoreAccountId, "IX_StoreManagers_StoreAccountId");
+            entity.HasIndex(e => e.Email, "IX_StoreManagers_Email");
+            entity.HasIndex(e => e.Status, "IX_StoreManagers_Status");
+            entity.Property(e => e.Status).HasConversion<int>();
+            entity.HasOne(d => d.Store)
+                  .WithMany(p => p.Managers)
+                  .HasForeignKey(d => d.StoreAccountId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<Food>(entity =>
+        {
+            entity.ToTable("foods");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).ValueGeneratedNever();
+            entity.HasIndex(e => e.StoreAccountId, "IX_Foods_StoreAccountId");
+            entity.HasIndex(e => e.Status, "IX_Foods_Status");
+            entity.Property(e => e.Status).HasConversion<int>();
+            entity.Property(e => e.Price).HasPrecision(18, 2);
+            entity.Property(e => e.OriginalPrice).HasPrecision(18, 2);
+            entity.HasOne(d => d.Store)
+                  .WithMany(p => p.Foods)
+                  .HasForeignKey(d => d.StoreAccountId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
     }
 }
+

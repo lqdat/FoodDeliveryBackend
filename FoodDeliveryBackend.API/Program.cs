@@ -1,4 +1,6 @@
 using FoodDeliveryBackend.Infrastructure.Data;
+using FoodDeliveryBackend.API.Services;
+using FoodDeliveryBackend.Core.Entities.Admin;
 using Microsoft.EntityFrameworkCore;
 
 DotNetEnv.Env.Load(); // Load .env file
@@ -51,6 +53,41 @@ builder.Services.AddAuthentication(Microsoft.AspNetCore.Authentication.JwtBearer
         };
     });
 
+// 4. Authorization Policies
+builder.Services.AddAuthorization(options =>
+{
+    // Admin Role Policies
+    options.AddPolicy("SuperAdminOnly", policy =>
+        policy.RequireRole(AdminRole.SuperAdmin.ToString()));
+    
+    options.AddPolicy("MasterAdminOnly", policy =>
+        policy.RequireRole(AdminRole.AdminRestaurantMaster.ToString()));
+    
+    options.AddPolicy("RegionAdminOnly", policy =>
+        policy.RequireRole(AdminRole.AdminRestaurantRegion.ToString()));
+    
+    options.AddPolicy("CanApprove", policy =>
+        policy.RequireRole(
+            AdminRole.AdminRestaurantMaster.ToString(),
+            AdminRole.AdminRestaurantRegion.ToString()));
+    
+    // ChainOwner Policies
+    options.AddPolicy("ChainOwnerOnly", policy =>
+        policy.RequireClaim("AccountType", "ChainOwner"));
+    
+    options.AddPolicy("StoreManagerOnly", policy =>
+        policy.RequireClaim("AccountType", "StoreManager"));
+    
+    options.AddPolicy("ChainOwnerOrManager", policy =>
+        policy.RequireClaim("AccountType", "ChainOwner", "StoreManager"));
+});
+
+// 5. Application Services
+builder.Services.AddScoped<IAdminService, AdminService>();
+builder.Services.AddScoped<IApprovalService, ApprovalService>();
+builder.Services.AddScoped<IAccountService, AccountService>();
+builder.Services.AddScoped<IFoodService, FoodService>();
+
 builder.Services.AddSignalR();
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
@@ -89,6 +126,7 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
+
 // Configure the HTTP request pipeline.
 app.UseSwagger();
 app.UseSwaggerUI();
@@ -108,6 +146,9 @@ if (app.Environment.IsDevelopment())
             if (!skipSeeding)
             {
                 await DbSeeder.SeedAsync(dbContext);
+                
+                // Seed Admin accounts
+                await AdminSeeder.SeedAdminAccountsAsync(dbContext);
             }
             else
             {
@@ -120,6 +161,7 @@ if (app.Environment.IsDevelopment())
         }
     }
 }
+
 
 app.UseHttpsRedirection();
 app.UseCors("AllowAll");
