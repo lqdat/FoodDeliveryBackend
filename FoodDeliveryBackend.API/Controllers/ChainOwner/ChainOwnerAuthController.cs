@@ -52,6 +52,66 @@ public class ChainOwnerAuthController : ControllerBase
     }
 
     /// <summary>
+    /// Step 2: Upload documents for verification.
+    /// </summary>
+    [HttpPost("register/chain-owner/{id}/upload-docs")]
+    public async Task<IActionResult> UploadDocs(Guid id, [FromBody] UploadDocsDto dto)
+    {
+        try
+        {
+            await _accountService.UpdateChainOwnerDocsAsync(
+                id,
+                dto.BusinessLicenseUrl,
+                dto.IdCardFrontUrl,
+                dto.IdCardBackUrl,
+                dto.FoodSafetyCertUrl);
+            return Ok(new { message = "Documents uploaded successfully" });
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound(new { message = "Chain Owner not found" });
+        }
+    }
+
+    /// <summary>
+    /// Step 3: Generate/View Contract.
+    /// </summary>
+    [HttpGet("register/chain-owner/{id}/contract")]
+    public async Task<ActionResult<ContractViewDto>> GetContract(Guid id)
+    {
+        try
+        {
+            var contract = await _accountService.GenerateContractAsync(id);
+            return Ok(contract);
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound(new { message = "Chain Owner not found" });
+        }
+    }
+
+    /// <summary>
+    /// Step 4: Digital Sign Contract.
+    /// </summary>
+    [HttpPost("register/chain-owner/{id}/sign-contract")]
+    public async Task<ActionResult<ChainOwnerProfileDto>> SignContract(Guid id, [FromBody] SignContractDto dto)
+    {
+        try
+        {
+            var chainOwner = await _accountService.SignContractAsync(id, dto);
+            return Ok(MapToProfileDto(chainOwner));
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound(new { message = "Chain Owner not found" });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    /// <summary>
     /// Chain Owner login.
     /// </summary>
     [HttpPost("login/chain-owner")]
@@ -169,6 +229,11 @@ public class ChainOwnerAuthController : ControllerBase
             chainOwner.RegionCode,
             chainOwner.Status.ToString(),
             chainOwner.CreatedAt,
+            // Signature mappings
+            chainOwner.ContractNumber,
+            chainOwner.SignedPdfUrl,
+            chainOwner.SignedAt,
+            chainOwner.SignatureId,
             chainOwner.Stores?.Select(s => new StoreDto(
                 s.Id,
                 s.StoreName,

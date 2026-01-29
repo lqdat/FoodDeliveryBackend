@@ -36,7 +36,33 @@ public record ChainOwnerProfileDto(
     string RegionCode,
     string Status,
     DateTime CreatedAt,
+    // Signature Info
+    string? ContractNumber,
+    string? SignedPdfUrl,
+    DateTime? SignedAt,
+    string? SignatureId,
     List<StoreDto> Stores);
+
+// ==================== Registration Flow DTOs ====================
+
+public record UploadDocsDto(
+    string? BusinessLicenseUrl,
+    string? IdCardFrontUrl,
+    string? IdCardBackUrl,
+    string? FoodSafetyCertUrl);
+
+public record ContractViewDto(
+    string ContractNumber,
+    string ContractContent, // Or URL
+    DateTime GeneratedAt);
+
+public record SignContractDto(
+    [Required] string ContractNumber,
+    [Required] string SignatureImageUrl,
+    [Required] string OtpCode,
+    string? DeviceInfo,
+    string? IpAddress,
+    bool AgreedToTerms);
 
 // ==================== Store DTOs ====================
 

@@ -308,6 +308,10 @@ public class FoodDeliveryDbContext : DbContext
             entity.HasIndex(e => e.RegionCode, "IX_ChainOwnerAccounts_RegionCode");
             entity.HasIndex(e => e.Status, "IX_ChainOwnerAccounts_Status");
             entity.Property(e => e.Status).HasConversion<int>();
+            
+            // Signature fields configuration
+            entity.Property(e => e.ContractNumber).HasMaxLength(50);
+            entity.HasIndex(e => e.ContractNumber, "IX_ChainOwnerAccounts_ContractNumber").IsUnique();
         });
 
         modelBuilder.Entity<StoreAccount>(entity =>

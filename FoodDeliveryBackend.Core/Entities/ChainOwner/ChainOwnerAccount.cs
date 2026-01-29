@@ -46,4 +46,58 @@ public class ChainOwnerAccount
     /// Stores owned by this chain owner.
     /// </summary>
     public virtual ICollection<StoreAccount> Stores { get; set; } = new List<StoreAccount>();
+
+    // ========================================================================
+    // DIGITAL SIGNATURE & CONTRACT FIELDS
+    // ========================================================================
+
+    /// <summary>
+    /// Unique contract number (e.g., HD-2026-001234).
+    /// </summary>
+    public string? ContractNumber { get; set; }
+
+    /// <summary>
+    /// URL to the original contract PDF (unsigned).
+    /// </summary>
+    public string? ContractPdfUrl { get; set; }
+
+    /// <summary>
+    /// URL to the signed contract PDF.
+    /// </summary>
+    public string? SignedPdfUrl { get; set; }
+
+    /// <summary>
+    /// URL to the signature image (handwritten representation).
+    /// </summary>
+    public string? SignatureImageUrl { get; set; }
+
+    /// <summary>
+    /// Timestamp when the digital signature was applied.
+    /// </summary>
+    public DateTime? SignedAt { get; set; }
+
+    /// <summary>
+    /// IP address of the signer.
+    /// </summary>
+    public string? SignerIp { get; set; }
+
+    /// <summary>
+    /// Device information of the signer.
+    /// </summary>
+    public string? SignerDevice { get; set; }
+
+    /// <summary>
+    /// Whether OTP verification was successful for this signature.
+    /// </summary>
+    public bool OtpVerified { get; set; } = false;
+
+    /// <summary>
+    /// SHA256 hash of the document content at time of signing.
+    /// </summary>
+    public string? DocumentHash { get; set; }
+
+    /// <summary>
+    /// Unique ID for the signature transaction.
+    /// </summary>
+    public string? SignatureId { get; set; }
 }
