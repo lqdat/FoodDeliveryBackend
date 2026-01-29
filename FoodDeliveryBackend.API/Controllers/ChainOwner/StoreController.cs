@@ -175,6 +175,11 @@ public class StoreController : ControllerBase
             chainOwner.RegionCode,
             chainOwner.Status.ToString(),
             chainOwner.CreatedAt,
+            // Signature fields
+            chainOwner.ContractNumber,
+            chainOwner.SignedPdfUrl,
+            chainOwner.SignedAt,
+            chainOwner.SignatureId,
             chainOwner.Stores?.Select(s => new StoreDto(
                 s.Id,
                 s.StoreName,

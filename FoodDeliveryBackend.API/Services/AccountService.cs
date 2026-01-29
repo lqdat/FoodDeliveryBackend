@@ -339,6 +339,7 @@ public class AccountService : IAccountService
         manager.LastLoginAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();
 
+        return manager;
     }
 
     public async Task<Food> CreateFoodAsync(
